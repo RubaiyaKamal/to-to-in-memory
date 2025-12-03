@@ -5,7 +5,7 @@ import sys
 
 from todo.cli.formatter import format_error, format_success, format_task, format_task_list
 from todo.services.todo_service import TodoService
-from todo.storage.repository import InMemoryTaskRepository
+from todo.storage.json_repository import JsonTaskRepository
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -66,8 +66,8 @@ def main() -> None:
         parser.print_help()
         sys.exit(0)
 
-    # Initialize service with in-memory repository
-    repository = InMemoryTaskRepository()
+    # Initialize service with JSON repository for persistence
+    repository = JsonTaskRepository()
     service = TodoService(repository)
 
     try:
