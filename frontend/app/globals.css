@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#F0FDFA] text-[#0F172A];
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-[#0D9488] text-white px-4 py-2 rounded-lg hover:bg-[#0F766E] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md;
+  }
+
+  .btn-danger {
+    @apply bg-[#E11D48] text-white px-4 py-2 rounded-lg hover:bg-[#BE123C] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg;
+  }
+
+  .btn-edit {
+    @apply bg-[#06B6D4] text-white px-4 py-2 rounded-lg hover:bg-[#0891B2] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0D9488] focus:border-transparent transition-all duration-200;
+  }
+
+  .card {
+    @apply p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100;
+  }
+
+  .navbar-gradient {
+    @apply bg-gradient-to-r from-[#134E4A] to-[#0D9488];
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.task-enter {
+  animation: slideIn 0.3s ease-out;
+}
+
+.confetti {
+  animation: confetti 1s ease-out forwards;
+}

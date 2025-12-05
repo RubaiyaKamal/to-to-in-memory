@@ -1,34 +1,18 @@
 [
   {
-    "id": "57b55b87-25c7-4543-af32-435531009173",
-    "title": "My Persistent Task",
-    "description": "",
+    "id": "8026c430-018b-4b58-a12a-e4ea2273aff3",
+    "title": "Buy Groceries",
+    "description": "Eggs,  Bread, Milk",
     "status": "incomplete",
-    "created_at": "2025-12-04T01:34:15.994189",
-    "updated_at": "2025-12-04T01:34:15.994240"
+    "created_at": "2025-12-04T23:36:30.804489",
+    "updated_at": "2025-12-04T23:36:30.805255"
   },
   {
-    "id": "5b346a55-07cf-49d7-b19e-34dee338a0e5",
-    "title": "Buy organic groceries",
-    "description": "Milk, eggs, bread",
-    "status": "incomplete",
-    "created_at": "2025-12-04T01:41:52.918610",
-    "updated_at": "2025-12-04T01:46:39.012450"
-  },
-  {
-    "id": "a0398946-51b4-4863-9d7c-a2a7d124a4c0",
-    "title": "Finish homework",
-    "description": "",
+    "id": "87bf88f6-f24c-49fa-ad6e-2d527c757236",
+    "title": "Read AI Native book",
+    "description": "chapter 4 is pending",
     "status": "complete",
-    "created_at": "2025-12-04T01:42:11.467872",
-    "updated_at": "2025-12-04T01:47:18.995134"
-  },
-  {
-    "id": "7945753a-52d0-48fd-86dd-e2fbca162f48",
-    "title": "Buy groceries",
-    "description": "Milk, bread, eggs",
-    "status": "incomplete",
-    "created_at": "2025-12-04T19:35:45.047496",
-    "updated_at": "2025-12-04T19:35:45.047536"
+    "created_at": "2025-12-04T23:37:06.501517",
+    "updated_at": "2025-12-04T23:37:27.163336"
   }
 ]

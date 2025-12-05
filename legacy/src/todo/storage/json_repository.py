@@ -3,7 +3,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from todo.models.task import Task, TaskStatus
 from todo.storage.repository import TaskRepository
@@ -20,10 +20,10 @@ class JsonTaskRepository(TaskRepository):
             file_path: Path to the JSON file for storage
         """
         self._file_path = file_path
-        self._tasks: Dict[str, Task] = {}
+        self._tasks: dict[str, Task] = {}
         self._load()
 
-    def _serialize_task(self, task: Task) -> Dict[str, Any]:
+    def _serialize_task(self, task: Task) -> dict[str, Any]:
         """Convert a Task object to a dictionary."""
         return {
             "id": task.id,
@@ -34,7 +34,7 @@ class JsonTaskRepository(TaskRepository):
             "updated_at": task.updated_at.isoformat(),
         }
 
-    def _deserialize_task(self, data: Dict[str, Any]) -> Task:
+    def _deserialize_task(self, data: dict[str, Any]) -> Task:
         """Convert a dictionary to a Task object."""
         return Task(
             id=data["id"],
@@ -57,7 +57,7 @@ class JsonTaskRepository(TaskRepository):
             return
 
         try:
-            with open(self._file_path, "r", encoding="utf-8") as f:
+            with open(self._file_path, encoding="utf-8") as f:
                 data = json.load(f)
                 for item in data:
                     try:
@@ -77,11 +77,11 @@ class JsonTaskRepository(TaskRepository):
         self._save()
         return task
 
-    def get(self, task_id: str) -> Optional[Task]:
+    def get(self, task_id: str) -> Task | None:
         """Get a task by ID."""
         return self._tasks.get(task_id)
 
-    def get_all(self) -> List[Task]:
+    def get_all(self) -> list[Task]:
         """Get all tasks."""
         return list(self._tasks.values())
 

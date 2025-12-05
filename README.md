@@ -1,180 +1,211 @@
-# Todo In-Memory Console App
+# Todo App - Phase II: Full-Stack Web Application
 
-A command-line todo application with in-memory storage, built using spec-driven development with TDD principles.
+A modern full-stack todo application with Next.js frontend, FastAPI backend, and PostgreSQL database.
 
-## Features
+## 🚀 Features
 
-✅ **Add tasks** with title and optional description
-✅ **List all tasks** with status indicators
-✅ **Show specific task** details
-✅ **Update tasks** (title and/or description)
-✅ **Delete tasks** by ID
-✅ **Mark tasks** as complete or incomplete
+- ✅ User authentication with JWT tokens
+- ✅ Create, read, update, delete tasks
+- ✅ Mark tasks as complete/incomplete
+- ✅ User isolation (users only see their own tasks)
+- ✅ Persistent storage in PostgreSQL
+- ✅ Responsive web interface
+- ✅ RESTful API
 
-## Installation
-
-### Prerequisites
-
-- Python 3.13 or higher
-- [UV](https://github.com/astral-sh/uv) package manager
-
-### Setup
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd to-do-in-memory
-```
-
-2. Install dependencies:
-```bash
-uv sync --dev
-```
-
-## Usage
-
-### Running the Application
-
-You can run the application using either method:
-
-```bash
-# Using UV
-uv run todo <command>
-
-# Or as a Python module
-uv run python -m todo <command>
-```
-
-### Commands
-
-#### Add a Task
-```bash
-uv run todo add "Buy groceries"
-uv run todo add "Buy groceries" -d "Milk, eggs, bread"
-```
-
-#### List All Tasks
-```bash
-uv run todo list
-```
-
-#### Show a Specific Task
-```bash
-uv run todo show <task-id>
-```
-
-#### Update a Task
-```bash
-uv run todo update <task-id> -t "New title"
-uv run todo update <task-id> -d "New description"
-uv run todo update <task-id> -t "New title" -d "New description"
-```
-
-#### Delete a Task
-```bash
-uv run todo delete <task-id>
-```
-
-#### Mark Task as Complete
-```bash
-uv run todo complete <task-id>
-```
-
-#### Mark Task as Incomplete
-```bash
-uv run todo incomplete <task-id>
-```
-
-#### Get Help
-```bash
-uv run todo --help
-uv run todo <command> --help
-```
-
-## Development
-
-### Running Tests
-
-```bash
-# Run all tests with coverage
-uv run pytest -v --cov=src/todo --cov-report=term-missing
-
-# Run only unit tests
-uv run pytest tests/unit/ -v
-
-# Run only integration tests
-uv run pytest tests/integration/ -v
-```
-
-### Code Quality
-
-```bash
-# Run linter
-uv run ruff check src/ tests/
-
-# Run formatter
-uv run ruff format src/ tests/
-
-# Run type checker
-uv run mypy src/todo
-```
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 to-do-in-memory/
-├── .specify/              # SpecKit Plus configuration
-│   ├── memory/
-│   │   └── constitution.md
-│   └── templates/
-├── src/
-│   └── todo/
-│       ├── __init__.py
-│       ├── __main__.py
-│       ├── models/        # Data models (Task, TaskStatus)
-│       ├── storage/       # In-memory storage (Repository)
-│       ├── services/      # Business logic (TodoService)
-│       └── cli/           # CLI interface and formatter
-├── tests/
-│   ├── unit/              # Unit tests
-│   └── integration/       # Integration tests
-├── pyproject.toml
-├── README.md
-└── CLAUDE.md
+├── .spec-kit/              # Spec-Kit Plus configuration
+├── specs/                  # Specifications
+│   ├── overview.md
+│   ├── architecture.md
+│   ├── features/
+│   ├── api/
+│   ├── database/
+│   └── ui/
+├── frontend/               # Next.js application
+│   ├── app/               # Pages and layouts
+│   ├── components/        # React components
+│   └── lib/               # Utilities
+├── backend/                # FastAPI application
+│   ├── main.py
+│   ├── models.py
+│   ├── routes/
+│   └── db.py
+├── legacy/                 # Phase I console app
+├── docker-compose.yml
+└── README.md
 ```
 
-## Architecture
+## 🛠️ Tech Stack
 
-The application follows a layered architecture with clear separation of concerns:
+### Frontend
+- Next.js 15 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS
 
-- **Models Layer**: Data structures (Task, TaskStatus)
-- **Storage Layer**: In-memory repository implementing CRUD operations
-- **Services Layer**: Business logic and validation
-- **CLI Layer**: Command-line interface and output formatting
+### Backend
+- FastAPI
+- SQLModel (ORM)
+- Python 3.13
+- UV package manager
 
-## Testing
+### Database
+- Neon Serverless PostgreSQL
 
-The project follows strict TDD (Test-Driven Development) principles:
+## 📋 Prerequisites
 
-- **57 tests total** (46 unit + 11 integration)
-- **All tests passing** ✅
-- Tests written before implementation (Red-Green-Refactor)
-- Comprehensive coverage of all features and edge cases
+- **Node.js** 20+
+- **Python** 3.13+
+- **UV** package manager
+- **Neon PostgreSQL** account
 
-## Important Notes
+## 🚀 Quick Start
 
-⚠️ **Data Persistence**: This is an in-memory application. All data is lost when the application exits. This is by design for the basic level implementation.
+### 1. Set up Neon PostgreSQL
 
-⚠️ **Task IDs**: Each task is assigned a unique UUID. You'll need to copy the task ID from the output to update, delete, or mark tasks as complete.
+1. Create account at [https://neon.tech](https://neon.tech)
+2. Create a new database
+3. Copy the connection string
 
-## Technology Stack
+### 2. Configure Environment Variables
 
-- **Python**: 3.13+
-- **Package Manager**: UV
-- **Testing**: pytest, pytest-cov
-- **Type Checking**: mypy
-- **Linting/Formatting**: ruff
+#### Backend
+```bash
+cd backend
+cp .env.example .env
+# Edit .env and add:
+# - DATABASE_URL (from Neon)
+# - BETTER_AUTH_SECRET (generate a random 32+ character string)
+# - CORS_ORIGINS=http://localhost:3000
+```
 
-## License
+#### Frontend
+```bash
+cd frontend
+cp .env.local.example .env.local
+# Edit .env.local and add:
+# - NEXT_PUBLIC_API_URL=http://localhost:8000
+# - BETTER_AUTH_SECRET (same as backend)
+```
 
-This project is built as a learning exercise following spec-driven development practices.
+### 3. Install Dependencies
+
+#### Backend
+```bash
+cd backend
+uv sync --dev
+```
+
+#### Frontend
+```bash
+cd frontend
+npm install
+```
+
+### 4. Run the Application
+
+#### Option A: Run Separately
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+uv run uvicorn main:app --reload --port 8000
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+#### Option B: Run with Docker Compose
+
+```bash
+# From project root
+docker-compose up --build
+```
+
+### 5. Access the Application
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+
+## 📖 Usage
+
+1. **Sign Up**: Create a new account at `/signup`
+2. **Sign In**: Log in at `/signin`
+3. **Create Tasks**: Add new tasks with title and description
+4. **Manage Tasks**: Toggle completion, delete tasks
+5. **Sign Out**: Click sign out in the header
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd backend
+uv run pytest -v --cov
+```
+
+### Frontend Type Checking
+```bash
+cd frontend
+npm run type-check
+```
+
+## 📚 Documentation
+
+- **Architecture**: See `specs/architecture.md`
+- **API Endpoints**: See `specs/api/rest-endpoints.md`
+- **Database Schema**: See `specs/database/schema.md`
+- **Frontend Guidelines**: See `frontend/CLAUDE.md`
+- **Backend Guidelines**: See `backend/CLAUDE.md`
+
+## 🔐 Security
+
+- JWT token authentication
+- User isolation (users only see their own tasks)
+- Password hashing (when Better Auth is integrated)
+- CORS protection
+- Input validation
+
+## 🗺️ Roadmap
+
+### Phase I ✅
+- Console application with in-memory storage
+
+### Phase II 🚧 (Current)
+- Full-stack web application
+- PostgreSQL database
+- JWT authentication
+- RESTful API
+
+### Phase III 📋 (Future)
+- AI chatbot interface
+- Better Auth integration
+- OAuth providers (Google, GitHub)
+- Advanced features
+
+## 📝 Development Workflow
+
+1. Read relevant spec: `@specs/features/[feature].md`
+2. Implement backend: `@backend/CLAUDE.md`
+3. Implement frontend: `@frontend/CLAUDE.md`
+4. Test and verify
+5. Update specs if needed
+
+## 🤝 Contributing
+
+This is a learning project following spec-driven development practices.
+
+## 📄 License
+
+Educational project - Phase II of Hackathon Todo App
+
+## 🙏 Acknowledgments
+
+- Built with Spec-Kit Plus and Claude Code
+- Following spec-driven development methodology

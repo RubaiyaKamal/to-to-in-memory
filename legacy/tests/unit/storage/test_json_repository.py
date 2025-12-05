@@ -2,11 +2,11 @@
 
 import json
 import os
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 
-from todo.models.task import Task, TaskStatus
+from todo.models.task import Task
 from todo.storage.json_repository import JsonTaskRepository
 
 
@@ -14,7 +14,7 @@ class TestJsonTaskRepository:
     """Test JsonTaskRepository implementation."""
 
     @pytest.fixture
-    def test_file(self) -> Generator[str, None, None]:
+    def test_file(self) -> Generator[str]:
         """Fixture to provide a temporary test file path."""
         file_path = "test_tasks.json"
         yield file_path
@@ -35,7 +35,7 @@ class TestJsonTaskRepository:
 
         # Verify file exists and contains data
         assert os.path.exists(test_file)
-        with open(test_file, "r") as f:
+        with open(test_file) as f:
             data = json.load(f)
             assert len(data) == 1
             assert data[0]["id"] == task.id
@@ -66,7 +66,7 @@ class TestJsonTaskRepository:
         repo.update(task)
 
         # Verify file content
-        with open(test_file, "r") as f:
+        with open(test_file) as f:
             data = json.load(f)
             assert data[0]["title"] == "Updated"
 
@@ -79,7 +79,7 @@ class TestJsonTaskRepository:
         repo.delete(task.id)
 
         # Verify file content
-        with open(test_file, "r") as f:
+        with open(test_file) as f:
             data = json.load(f)
             assert len(data) == 0
 
