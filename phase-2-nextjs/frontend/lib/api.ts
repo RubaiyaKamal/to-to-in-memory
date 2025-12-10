@@ -1,6 +1,7 @@
 import type { Task, TaskCreate, TaskUpdate } from "@/types/task";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+console.log('🔍 API_URL loaded:', API_URL);
 
 /**
  * Get JWT token from localStorage
@@ -29,28 +30,47 @@ export const api = {
      * Get all tasks for user
      */
     async getTasks(userId: string): Promise<Task[]> {
-        const headers = getAuthHeaders();
-        const response = await fetch(`${API_URL}/api/${userId}/tasks`, { headers });
-        if (!response.ok) {
-            throw new Error("Failed to fetch tasks");
+        try {
+            const headers = getAuthHeaders();
+            console.log('Fetching tasks from:', `${API_URL}/api/${userId}/tasks`);
+            const response = await fetch(`${API_URL}/api/${userId}/tasks`, { headers });
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Failed to fetch tasks: ${response.status}`);
+            }
+            return response.json();
+        } catch (error) {
+            console.error('Fetch error:', error);
+            throw error;
         }
-        return response.json();
     },
 
     /**
      * Create a new task
      */
     async createTask(userId: string, data: TaskCreate): Promise<Task> {
-        const headers = getAuthHeaders();
-        const response = await fetch(`${API_URL}/api/${userId}/tasks`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) {
-            throw new Error("Failed to create task");
+        try {
+            const headers = getAuthHeaders();
+            console.log('Creating task at:', `${API_URL}/api/${userId}/tasks`);
+            console.log('Task data:', data);
+            const response = await fetch(`${API_URL}/api/${userId}/tasks`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(data),
+            });
+            console.log('Create response status:', response.status);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Failed to create task: ${response.status}`);
+            }
+            return response.json();
+        } catch (error) {
+            console.error('Create task error:', error);
+            throw error;
         }
-        return response.json();
     },
 
     /**

@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-[#F0FDFA] text-[#0F172A] font-sans;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    code,
+    pre {
+        font-family: 'Space Mono', monospace;
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply bg-[#0D9488] text-white px-4 py-2 rounded-lg hover:bg-[#0F766E] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg flex items-center gap-2 font-medium;
+    }
+
+    .btn-secondary {
+        @apply bg-white text-[#0F172A] border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center gap-2 font-medium;
+    }
+
+    .btn-action {
+        @apply flex flex-col items-center justify-center p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:border-[#0D9488] hover:text-[#0D9488] transition-all duration-200 gap-2 min-h-[100px] w-full text-center;
+    }
+
+    .input-field {
+        @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0D9488] focus:border-transparent transition-all duration-200 outline-none bg-gray-50/50 focus:bg-white;
+    }
+
+    .card {
+        @apply p-4 bg-white rounded-xl shadow-sm border border-gray-100;
+    }
+
+    .navbar-gradient {
+        @apply bg-gradient-to-r from-[#115E59] via-[#0D9488] to-[#14B8A6];
+    }
+
+    .message-bubble {
+        @apply p-4 rounded-2xl shadow-sm max-w-[85%] leading-relaxed;
+    }
+
+    .message-bubble.user {
+        @apply bg-gradient-to-br from-[#0F766E] to-[#0D9488] text-white rounded-tr-none;
+    }
+
+    .message-bubble.assistant {
+        @apply bg-white border border-gray-100 text-[#0F172A] rounded-tl-none;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.task-enter {
+    animation: slideIn 0.3s ease-out forwards;
+}
+
+.typing-dot {
+    animation: typing 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes typing {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
