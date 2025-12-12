@@ -32,6 +32,9 @@ class Task(SQLModel, table=True):
     title: str = SQLField(max_length=200)
     description: Optional[str] = SQLField(default=None)
     completed: bool = SQLField(default=False)
+    priority: Optional[str] = SQLField(default=None, max_length=50)  # Low, Medium, High
+    due_date: Optional[datetime] = SQLField(default=None)
+    category: Optional[str] = SQLField(default=None, max_length=100)
     created_at: datetime = SQLField(default_factory=datetime.utcnow)
     updated_at: datetime = SQLField(default_factory=datetime.utcnow)
 
@@ -42,12 +45,17 @@ class TaskCreate(BaseModel):
 
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=1000)
+    priority: Optional[str] = Field(default=None, max_length=50)
+    due_date: Optional[datetime] = Field(default=None)
+    category: Optional[str] = Field(default=None, max_length=100)
 
     def model_post_init(self, __context: object) -> None:
         """Strip whitespace from fields."""
         self.title = self.title.strip()
         if self.description:
             self.description = self.description.strip() or None
+        if self.category:
+            self.category = self.category.strip() or None
 
 
 class TaskUpdate(BaseModel):
@@ -55,6 +63,9 @@ class TaskUpdate(BaseModel):
 
     title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=1000)
+    priority: Optional[str] = Field(default=None, max_length=50)
+    due_date: Optional[datetime] = Field(default=None)
+    category: Optional[str] = Field(default=None, max_length=100)
 
     def model_post_init(self, __context: object) -> None:
         """Strip whitespace from fields."""
@@ -62,6 +73,8 @@ class TaskUpdate(BaseModel):
             self.title = self.title.strip()
         if self.description:
             self.description = self.description.strip() or None
+        if self.category:
+            self.category = self.category.strip() or None
 
 
 class TaskResponse(BaseModel):
@@ -72,6 +85,9 @@ class TaskResponse(BaseModel):
     title: str
     description: Optional[str]
     completed: bool
+    priority: Optional[str]
+    due_date: Optional[datetime]
+    category: Optional[str]
     created_at: datetime
     updated_at: datetime
 

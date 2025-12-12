@@ -31,6 +31,7 @@ class Message(SQLModel, table=True):
 class ChatRequest(SQLModel):
     message: str
     conversation_id: Optional[int] = None
+    language: str = "en"
 
 class ChatResponse(SQLModel):
     conversation_id: int

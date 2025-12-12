@@ -1,6 +1,16 @@
-import { ChatRequest, ChatResponse } from '../types';
+export interface ChatRequest {
+    message: string;
+    conversation_id?: number;
+    language?: string;
+}
 
-const API_BASE_URL = 'http://localhost:8000/api';
+export interface ChatResponse {
+    conversation_id: number;
+    response: string;
+    tool_calls?: any[];
+}
+
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 export const sendChatMessage = async (userId: string, request: ChatRequest): Promise<ChatResponse> => {
     const response = await fetch(`${API_BASE_URL}/${userId}/chat`, {

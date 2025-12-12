@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { FloatingChatbot } from "@/components/FloatingChatbot";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({
                 <main className="container mx-auto px-4 py-8">
                     {children}
                 </main>
+                <FloatingChatbot />
             </body>
         </html>
     );

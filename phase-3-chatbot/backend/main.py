@@ -10,9 +10,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
-from .database import create_db_and_tables, engine
-from .models import ChatRequest, ChatResponse
-from .agent import process_chat
+from database import create_db_and_tables, engine
+from models import ChatRequest, ChatResponse
+from agent import process_chat
 
 app = FastAPI()
 
