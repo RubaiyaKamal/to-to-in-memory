@@ -11,11 +11,11 @@ import VoiceInput from './VoiceInput';
 
 const QuickActions = ({ onAction, t, language }: { onAction: (prompt: string) => void, t: any, language: Language }) => {
     const actions = [
-        { icon: Plus, label: t.addTask, prompt: t.addTaskPrompt, color: 'text-[#0D9488] border-[#0D9488]' },
-        { icon: List, label: t.viewTasks, prompt: t.viewTasksPrompt, color: 'text-blue-600 border-blue-600' },
-        { icon: Edit, label: t.updateTask, prompt: t.updateTaskPrompt, color: 'text-orange-500 border-orange-500' },
-        { icon: Trash, label: t.deleteTask, prompt: t.deleteTaskPrompt, color: 'text-red-500 border-red-500' },
-        { icon: CheckCircle, label: t.markComplete, prompt: t.markCompletePrompt, color: 'text-green-600 border-green-600' }
+        { icon: Plus, label: t.addTask, prompt: t.addTaskPrompt, color: 'text-[#0D9488] border-[#0D9488]', bg: 'bg-teal-50 hover:bg-teal-100' },
+        { icon: List, label: t.viewTasks, prompt: t.viewTasksPrompt, color: 'text-blue-600 border-blue-600', bg: 'bg-blue-50 hover:bg-blue-100' },
+        { icon: Edit, label: t.updateTask, prompt: t.updateTaskPrompt, color: 'text-orange-500 border-orange-500', bg: 'bg-orange-50 hover:bg-orange-100' },
+        { icon: Trash, label: t.deleteTask, prompt: t.deleteTaskPrompt, color: 'text-red-500 border-red-500', bg: 'bg-red-50 hover:bg-red-100' },
+        { icon: CheckCircle, label: t.markComplete, prompt: t.markCompletePrompt, color: 'text-green-600 border-green-600', bg: 'bg-green-50 hover:bg-green-100' }
     ];
 
     return (
@@ -24,10 +24,10 @@ const QuickActions = ({ onAction, t, language }: { onAction: (prompt: string) =>
                 <button
                     key={idx}
                     onClick={() => onAction(action.prompt)}
-                    className={`btn-action group ${action.color} hover:bg-gray-50 flex flex-col items-center justify-center gap-2 p-3 border-2 rounded-xl shadow-sm transition-all duration-200 md:col-span-2 ${idx === 3 ? 'md:col-start-2' : ''}`}
+                    className={`btn-action group ${action.color} ${action.bg} flex flex-col items-center justify-center gap-2 p-6 h-32 w-full max-w-[220px] mx-auto border-2 rounded-xl shadow-sm transition-all duration-200 md:col-span-2 ${idx === 3 ? 'md:col-start-2' : ''}`}
                 >
-                    <action.icon className={`w-6 h-6 ${action.color}`} />
-                    <span className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 text-center">{action.label}</span>
+                    <action.icon className={`w-8 h-8 ${action.color}`} />
+                    <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 text-center">{action.label}</span>
                 </button>
             ))}
         </div>

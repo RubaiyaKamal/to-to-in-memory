@@ -8,8 +8,8 @@ from mcp.client.stdio import stdio_client
 from openai import AsyncOpenAI
 import json
 
-from database import engine
-from models import Conversation, Message, ChatRequest, ChatResponse
+from .database import engine
+from .models import Conversation, Message, ChatRequest, ChatResponse
 
 # Initialize OpenAI Client
 client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
