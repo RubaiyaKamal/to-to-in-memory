@@ -7,7 +7,18 @@ authors = [
     { name = "Rubaiya-Kamal", email = "kh0102267@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sqlmodel>=0.0.22",
+    "openai>=1.0.0",
+    "mcp>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "psycopg2-binary>=2.9.9",
+]
+
+[tool.uv]
+package = false
 
 [project.scripts]
 todo = "todo.cli.app:main"
