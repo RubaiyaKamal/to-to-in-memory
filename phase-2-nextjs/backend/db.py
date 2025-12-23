@@ -10,14 +10,17 @@ from sqlmodel import Session, SQLModel, create_engine
 # Get the directory where this file is located
 BASE_DIR = Path(__file__).resolve().parent
 
-# Load environment variables from .env file in the same directory
-env_path = BASE_DIR / ".env"
-load_dotenv(dotenv_path=env_path)
-
-# Get database URL from environment
+# 1. First, check if DATABASE_URL is already in system environment (Render)
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+# 2. If not, try loading from .env file (Local)
+if not DATABASE_URL:
+    load_dotenv(dotenv_path=BASE_DIR / ".env")
+    DATABASE_URL = os.getenv("DATABASE_URL")
+
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
+
 
 # Create engine
 engine = create_engine(DATABASE_URL, echo=True)
