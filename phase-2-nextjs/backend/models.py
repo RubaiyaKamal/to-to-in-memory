@@ -8,6 +8,7 @@ from sqlmodel import Field as SQLField
 from sqlmodel import SQLModel
 
 
+
 # Database Models
 class User(SQLModel, table=True):
     """User model (managed by Better Auth)."""
@@ -37,6 +38,30 @@ class Task(SQLModel, table=True):
     category: Optional[str] = SQLField(default=None, max_length=100)
     created_at: datetime = SQLField(default_factory=datetime.utcnow)
     updated_at: datetime = SQLField(default_factory=datetime.utcnow)
+
+
+class Conversation(SQLModel, table=True):
+    """Chat conversation history."""
+
+    __tablename__ = "conversations"
+
+    id: Optional[int] = SQLField(default=None, primary_key=True)
+    user_id: str = SQLField(foreign_key="users.id", index=True)
+    created_at: datetime = SQLField(default_factory=datetime.utcnow)
+    updated_at: datetime = SQLField(default_factory=datetime.utcnow)
+
+
+class Message(SQLModel, table=True):
+    """Chat message history."""
+
+    __tablename__ = "messages"
+
+    id: Optional[int] = SQLField(default=None, primary_key=True)
+    user_id: str = SQLField(foreign_key="users.id", index=True)
+    conversation_id: int = SQLField(foreign_key="conversations.id", index=True)
+    role: str = SQLField(max_length=50)  # "user" or "assistant"
+    content: str = SQLField()
+    created_at: datetime = SQLField(default_factory=datetime.utcnow)
 
 
 # Request/Response Models
@@ -95,3 +120,19 @@ class TaskResponse(BaseModel):
         """Pydantic config."""
 
         from_attributes = True
+
+
+class ChatRequest(BaseModel):
+    """Request model for chatbot interaction."""
+
+    message: str = Field(min_length=1)
+    conversation_id: Optional[int] = None
+    language: str = "en"
+
+
+class ChatResponse(BaseModel):
+    """Response model for chatbot interaction."""
+
+    conversation_id: int
+    response: str
+    tool_calls: list[dict] = []
