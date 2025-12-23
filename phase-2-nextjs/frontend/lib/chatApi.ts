@@ -1,6 +1,6 @@
 // API client for phase-2 nextjs backend (including chatbot logic)
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 export interface ChatMessage {
     message: string;
