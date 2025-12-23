@@ -1,6 +1,6 @@
-// API client for phase-3 chatbot backend
+// API client for phase-2 nextjs backend (including chatbot logic)
 
-const CHAT_API_URL = "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface ChatMessage {
     message: string;
@@ -17,17 +17,38 @@ export interface ChatResponse {
     }>;
 }
 
+/**
+ * Get JWT token from localStorage
+ */
+function getToken(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("auth_token");
+}
+
+/**
+ * Get authorization headers with JWT token
+ */
+function getAuthHeaders(): HeadersInit {
+    const token = getToken();
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+    return {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+    };
+}
+
 export async function sendChatMessage(
     userId: string,
     message: string,
     conversationId?: number,
     language: string = "en"
 ): Promise<ChatResponse> {
-    const response = await fetch(`${CHAT_API_URL}/${userId}/chat`, {
+    const headers = getAuthHeaders();
+    const response = await fetch(`${API_URL}/api/${userId}/chat`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
             message,
             conversation_id: conversationId,
@@ -36,7 +57,8 @@ export async function sendChatMessage(
     });
 
     if (!response.ok) {
-        throw new Error(`Chat API error: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Chat API error: ${response.status} ${errorText}`);
     }
 
     return response.json();

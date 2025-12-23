@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Bot, X, Send, Globe, RotateCcw } from "lucide-react";
 import { sendChatMessage } from "@/lib/chatApi";
 import { getUser } from "@/lib/auth";
+import { VoiceInput } from "./VoiceInput";
 
 interface TaskFormData {
     title: string;
@@ -97,6 +98,11 @@ export function FloatingChatbot() {
 
             // Call phase-3 chatbot API
             const response = await sendChatMessage(userId, userMessage, conversationId, language);
+
+            // Trigger task form if AI sends the marker
+            if (response.response.includes("<<SHOW_ADD_TASK_FORM>>")) {
+                setShowTaskForm(true);
+            }
 
             // Update conversation ID
             if (!conversationId) {
@@ -230,6 +236,11 @@ export function FloatingChatbot() {
         if (text.includes("Back to Main Menu") || text.includes("مین مینو پر واپس جائیں")) {
             handleBackToMenu();
         }
+    };
+
+    const handleSpeechResult = (text: string) => {
+        setInputMessage(text);
+        // We could also auto-send, but letting user review is safer
     };
 
     return (
@@ -487,6 +498,10 @@ export function FloatingChatbot() {
                                     placeholder={language === "en" ? "Type your message..." : "اپنا پیغام لکھیں..."}
                                     dir={language === "ur" ? "rtl" : "ltr"}
                                     className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                                    disabled={isLoading}
+                                />
+                                <VoiceInput
+                                    onSpeechResult={handleSpeechResult}
                                     disabled={isLoading}
                                 />
                                 <button
