@@ -1,7 +1,7 @@
 from fastmcp import FastMCP
 from sqlmodel import Session, select
 from typing import Optional, List
-from database import engine, create_db_and_tables
+from db import engine, init_db
 from models import Task
 
 # Initialize MCP Server
@@ -92,6 +92,12 @@ def update_task(user_id: str, task_id: int, title: Optional[str] = None, descrip
         return {"task_id": task.id, "status": "updated", "title": task.title}
 
 if __name__ == "__main__":
-    # Ensure tables exist
-    create_db_and_tables()
-    mcp.run()
+    import traceback
+    try:
+        # Ensure tables exist
+        init_db()
+        mcp.run()
+    except Exception as e:
+        with open("mcp_error.log", "w") as f:
+            f.write(f"Startup Error: {e}\n")
+            f.write(traceback.format_exc())

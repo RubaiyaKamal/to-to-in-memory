@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-chatbot-config
+  namespace: todo-chatbot
+  labels:
+    app: todo-chatbot
+data:
+  DATABASE_URL: "sqlite:///./database_v2.db"
+  BACKEND_PORT: "8001"
+  FRONTEND_PORT: "80"

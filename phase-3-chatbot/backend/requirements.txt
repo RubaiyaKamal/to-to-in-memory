@@ -1,0 +1,29 @@
+# FastAPI and Web Framework
+fastapi==0.115.6
+uvicorn[standard]>=0.35.0
+python-multipart>=0.0.12
+
+# Database
+sqlmodel==0.0.22
+sqlalchemy==2.0.25
+
+# OpenAI Integration
+openai>=1.0.0
+
+# MCP (Model Context Protocol)
+fastmcp>=2.14.1
+
+# Environment Variables
+python-dotenv>=1.1.0
+
+# CORS
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.2
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx>=0.28.1
+
+# Type Hints
+# pydantic version managed by fastmcp
