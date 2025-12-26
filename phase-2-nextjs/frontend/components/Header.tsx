@@ -1,9 +1,19 @@
 "use client";
 
-import { signOut, getUser } from "@/lib/auth";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { signOut, getUser, User } from "@/lib/auth";
 
 export function Header() {
-    const user = getUser();
+    const [mounted, setMounted] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
+    const pathname = usePathname();
+
+    useEffect(() => {
+        setMounted(true);
+        setUser(getUser());
+    }, []);
 
     const handleSignOut = () => {
         if (confirm("Are you sure you want to sign out?")) {
@@ -28,8 +38,34 @@ export function Header() {
                         </div>
                     </div>
 
+                    {/* Navigation Links */}
+                    {mounted && user && (
+                        <nav className="flex items-center gap-2">
+                            <Link
+                                href="/tasks"
+                                className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                                    pathname === "/tasks"
+                                        ? "bg-white text-[#0D9488] font-semibold"
+                                        : "bg-white/10 hover:bg-white/20 text-white"
+                                }`}
+                            >
+                                Tasks
+                            </Link>
+                            <Link
+                                href="/history"
+                                className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                                    pathname === "/history"
+                                        ? "bg-white text-[#0D9488] font-semibold"
+                                        : "bg-white/10 hover:bg-white/20 text-white"
+                                }`}
+                            >
+                                History
+                            </Link>
+                        </nav>
+                    )}
+
                     {/* User Section */}
-                    {user && (
+                    {mounted && user && (
                         <div className="flex items-center gap-4">
                             <div className="text-right hidden sm:block">
                                 <p className="text-sm font-medium">{user.email}</p>

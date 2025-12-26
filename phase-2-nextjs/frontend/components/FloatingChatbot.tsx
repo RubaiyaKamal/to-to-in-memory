@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Bot, X, Send, Globe, RotateCcw } from "lucide-react";
 import { sendChatMessage } from "@/lib/chatApi";
 import { getUser } from "@/lib/auth";
+import VoiceInput from "./VoiceInput";
 
 interface TaskFormData {
     title: string;
@@ -478,7 +479,11 @@ export function FloatingChatbot() {
                     {/* Input */}
                     {!showTaskForm && (
                         <div className="p-4 bg-white border-t border-gray-200">
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
+                                <VoiceInput
+                                    onSpeechResult={(text) => setInputMessage(text)}
+                                    isDisabled={language === "ur"}
+                                />
                                 <input
                                     type="text"
                                     value={inputMessage}

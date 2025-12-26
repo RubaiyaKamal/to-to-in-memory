@@ -8,17 +8,17 @@ load_dotenv(dotenv_path=env_path)
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from database import create_db_and_tables, engine
-from models import ChatRequest, ChatResponse
+from models import ChatRequest, ChatResponse, TaskHistory
 from agent import process_chat
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:30080", "http://127.0.0.1:30080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,3 +42,11 @@ async def chat_endpoint(user_id: str, request: ChatRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/{user_id}/history")
+def get_history(user_id: str):
+    """Get task history for user."""
+    with Session(engine) as session:
+        statement = select(TaskHistory).where(TaskHistory.user_id == user_id).order_by(TaskHistory.changed_at.desc())
+        results = session.exec(statement).all()
+        return [history.model_dump() for history in results]

@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 # Load environment variables from .env file in the same directory
 env_path = BASE_DIR / ".env"
-load_dotenv(dotenv_path=env_path)
+load_dotenv(dotenv_path=env_path, override=True)
 
 # Get database URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -20,7 +20,7 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
 # Create engine
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=False)
 
 
 def init_db() -> None:

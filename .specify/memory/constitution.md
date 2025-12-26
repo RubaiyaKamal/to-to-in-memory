@@ -1,122 +1,55 @@
-# Todo In-Memory Constitution
+# [PROJECT_NAME] Constitution
+<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
 
 ## Core Principles
 
-### I. Clean Code & Python Best Practices
-- Follow PEP 8 style guidelines
-- Write self-documenting code with clear variable and function names
-- Keep functions small and focused on a single responsibility
-- Use type hints for better code clarity and IDE support
-- Maintain proper separation of concerns
+### [PRINCIPLE_1_NAME]
+<!-- Example: I. Library-First -->
+[PRINCIPLE_1_DESCRIPTION]
+<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
-### II. Command-Line Interface First
-- Every feature must be accessible via CLI
-- Use clear, intuitive command structure: `todo <action> [arguments]`
-- Provide helpful error messages and usage instructions
-- Support both short and long argument formats
-- Output should be human-readable with clear formatting
+### [PRINCIPLE_2_NAME]
+<!-- Example: II. CLI Interface -->
+[PRINCIPLE_2_DESCRIPTION]
+<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
 
-### III. Test-Driven Development (NON-NEGOTIABLE)
-- Write tests before implementation
-- All features must have corresponding unit tests
-- Maintain test coverage above 80%
-- Tests must pass before any commit
-- Follow Red-Green-Refactor cycle strictly
+### [PRINCIPLE_3_NAME]
+<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+[PRINCIPLE_3_DESCRIPTION]
+<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
 
-### IV. Spec-Driven Development
-- Every feature starts with a specification document
-- Specifications must be reviewed and approved before implementation
-- Use Spec-Kit Plus for structured specification management
-- Maintain specs history in the `specs/` folder
-- Document architectural decisions in ADR format
+### [PRINCIPLE_4_NAME]
+<!-- Example: IV. Integration Testing -->
+[PRINCIPLE_4_DESCRIPTION]
+<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
 
-### V. Dependency Management with UV
-- Use UV for all Python dependency management
-- Keep `pyproject.toml` up to date
-- Lock dependencies with `uv.lock`
-- Use virtual environments for isolation
-- Document all required dependencies
+### [PRINCIPLE_5_NAME]
+<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+[PRINCIPLE_5_DESCRIPTION]
+<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
-### VI. Data Integrity & Validation
-- Validate all user inputs
-- Use Pydantic models for data validation
-- Ensure data consistency across operations
-- Handle edge cases gracefully
-- Provide clear error messages for invalid data
+### [PRINCIPLE_6_NAME]
 
-## Technology Stack
 
-### Required Technologies
-- **Language**: Python 3.11+
-- **Package Manager**: UV
-- **Testing**: pytest, pytest-cov
-- **Code Quality**: ruff (linting), mypy (type checking)
-- **Data Validation**: Pydantic
-- **Storage**: In-memory (with future persistence support)
+[PRINCIPLE__DESCRIPTION]
 
-### Project Structure
-```
-to-do-in-memory/
-├── src/              # Source code
-├── tests/            # Test files
-├── specs/            # Specification documents
-├── .specify/         # Spec-Kit Plus configuration
-├── pyproject.toml    # Project configuration
-└── README.md         # Project documentation
-```
+## [SECTION_2_NAME]
+<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
 
-## Development Workflow
+[SECTION_2_CONTENT]
+<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
 
-### Feature Development Process
-1. **Specification Phase**
-   - Create feature specification in `specs/` folder
-   - Document requirements, acceptance criteria, and constraints
-   - Get specification approved before coding
+## [SECTION_3_NAME]
+<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
 
-2. **Planning Phase**
-   - Create implementation plan
-   - Break down into tasks
-   - Identify dependencies and risks
-
-3. **Implementation Phase**
-   - Write tests first (TDD)
-   - Implement feature to pass tests
-   - Refactor for clean code
-   - Update documentation
-
-4. **Verification Phase**
-   - Run all tests (`uv run pytest`)
-   - Check code quality (`uv run ruff check`)
-   - Verify type hints (`uv run mypy`)
-   - Manual testing of CLI commands
-
-5. **Documentation Phase**
-   - Update README.md
-   - Update CLAUDE.md with AI collaboration notes
-   - Document any architectural decisions
-
-### Quality Gates
-- All tests must pass
-- Code coverage must be ≥ 80%
-- No linting errors
-- Type checking must pass
-- Manual verification of CLI functionality
+[SECTION_3_CONTENT]
+<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
 
 ## Governance
+<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-### Constitution Authority
-- This constitution supersedes all other development practices
-- All code reviews must verify compliance with these principles
-- Any deviation must be documented and justified
+[GOVERNANCE_RULES]
+<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
 
-### Amendment Process
-- Amendments require documentation of rationale
-- Must include migration plan if affecting existing code
-- Version number must be incremented
-
-### Compliance
-- All pull requests must comply with this constitution
-- Complexity must be justified with clear benefits
-- Use `.specify/memory/guidance.md` for runtime development guidance
-
-**Version**: 1.0.0 | **Ratified**: 2025-12-02 | **Last Amended**: 2025-12-04
+**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
+<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->

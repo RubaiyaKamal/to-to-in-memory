@@ -3,14 +3,14 @@
 import os
 
 from dotenv import load_dotenv
+# Load environment variables immediately
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from db import init_db
-from routes import health, tasks
-
-# Load environment variables
-load_dotenv()
+from backend.db import init_db
+from backend.routes import health, tasks, chat
 
 # Create FastAPI app
 app = FastAPI(
@@ -20,7 +20,8 @@ app = FastAPI(
 )
 
 # CORS configuration
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+#cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://to-to-in-memory-1.onrender.com").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -32,6 +33,7 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router)
 app.include_router(tasks.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
 
 
 @app.on_event("startup")

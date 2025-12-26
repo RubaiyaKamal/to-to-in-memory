@@ -2,10 +2,31 @@ from fastmcp import FastMCP
 from sqlmodel import Session, select
 from typing import Optional, List
 from database import engine, create_db_and_tables
-from models import Task
+from models import Task, TaskHistory
 
 # Initialize MCP Server
 mcp = FastMCP("Todo Agent")
+
+def log_task_history(
+    session: Session,
+    task_id: int,
+    user_id: str,
+    action: str,
+    field_name: Optional[str] = None,
+    old_value: Optional[str] = None,
+    new_value: Optional[str] = None,
+) -> None:
+    """Log task change to history."""
+    history_entry = TaskHistory(
+        task_id=task_id,
+        user_id=user_id,
+        action=action,
+        field_name=field_name,
+        old_value=old_value,
+        new_value=new_value,
+    )
+    session.add(history_entry)
+    session.commit()
 
 @mcp.tool()
 def add_task(user_id: str, title: str, description: Optional[str] = None, priority: Optional[str] = "medium", due_date: Optional[str] = None, category: Optional[str] = "general") -> dict:
@@ -15,6 +36,16 @@ def add_task(user_id: str, title: str, description: Optional[str] = None, priori
         session.add(task)
         session.commit()
         session.refresh(task)
+
+        # Log creation to history
+        log_task_history(
+            session=session,
+            task_id=task.id,
+            user_id=user_id,
+            action="created",
+            new_value=task.title,
+        )
+
         return {"task_id": task.id, "status": "created", "title": task.title, "priority": task.priority, "due_date": task.due_date, "category": task.category}
 
 @mcp.tool()
@@ -38,10 +69,23 @@ def complete_task(user_id: str, task_id: int) -> dict:
         if not task or task.user_id != user_id:
             return {"error": "Task not found"}
 
+        old_completed = task.completed
         task.completed = True
         session.add(task)
         session.commit()
         session.refresh(task)
+
+        # Log completion status change
+        log_task_history(
+            session=session,
+            task_id=task_id,
+            user_id=user_id,
+            action="completed",
+            field_name="completed",
+            old_value=str(old_completed),
+            new_value=str(task.completed),
+        )
+
         return {"task_id": task.id, "status": "completed", "title": task.title}
 
 @mcp.tool()
@@ -51,6 +95,15 @@ def delete_task(user_id: str, task_id: int) -> dict:
         task = session.get(Task, task_id)
         if not task or task.user_id != user_id:
             return {"error": "Task not found"}
+
+        # Log deletion before deleting
+        log_task_history(
+            session=session,
+            task_id=task_id,
+            user_id=user_id,
+            action="deleted",
+            old_value=task.title,
+        )
 
         session.delete(task)
         session.commit()
@@ -75,21 +128,35 @@ def update_task(user_id: str, task_id: int, title: Optional[str] = None, descrip
         if not task or task.user_id != user_id:
             return {"error": "Task not found"}
 
-        if title:
+        # Log each field change
+        if title and title != task.title:
+            log_task_history(session, task_id, user_id, "updated", "title", task.title, title)
             task.title = title
-        if description:
+        if description and description != task.description:
+            log_task_history(session, task_id, user_id, "updated", "description", task.description, description)
             task.description = description
-        if priority:
+        if priority and priority != task.priority:
+            log_task_history(session, task_id, user_id, "updated", "priority", task.priority, priority)
             task.priority = priority
-        if due_date:
+        if due_date and due_date != task.due_date:
+            log_task_history(session, task_id, user_id, "updated", "due_date", task.due_date, due_date)
             task.due_date = due_date
-        if category:
+        if category and category != task.category:
+            log_task_history(session, task_id, user_id, "updated", "category", task.category, category)
             task.category = category
 
         session.add(task)
         session.commit()
         session.refresh(task)
         return {"task_id": task.id, "status": "updated", "title": task.title}
+
+@mcp.tool()
+def get_task_history(user_id: str) -> List[dict]:
+    """Get task history audit log for the user"""
+    with Session(engine) as session:
+        statement = select(TaskHistory).where(TaskHistory.user_id == user_id).order_by(TaskHistory.changed_at.desc())
+        results = session.exec(statement).all()
+        return [history.model_dump() for history in results]
 
 if __name__ == "__main__":
     # Ensure tables exist

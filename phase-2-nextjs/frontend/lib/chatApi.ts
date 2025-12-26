@@ -1,6 +1,6 @@
 // API client for phase-3 chatbot backend
 
-const CHAT_API_URL = "http://localhost:8001/api";
+const CHAT_API_URL = "http://localhost:8000/api";
 
 export interface ChatMessage {
     message: string;

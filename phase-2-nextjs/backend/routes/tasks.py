@@ -5,9 +5,9 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
-from auth import verify_jwt
-from db import get_session
-from models import Task, TaskCreate, TaskResponse, TaskUpdate, User
+from backend.auth import verify_jwt
+from backend.db import get_session
+from backend.models import Task, TaskCreate, TaskResponse, TaskUpdate, User, TaskHistory, TaskHistoryResponse
 
 router = APIRouter(tags=["tasks"])
 
@@ -27,6 +27,39 @@ def ensure_user_exists(user_id: str, session: Session) -> None:
         )
         session.add(user)
         session.commit()
+
+
+def log_task_history(
+    session: Session,
+    task_id: int,
+    user_id: str,
+    action: str,
+    field_name: str | None = None,
+    old_value: str | None = None,
+    new_value: str | None = None,
+) -> None:
+    """
+    Log task change to history.
+
+    Args:
+        session: Database session
+        task_id: ID of the task that changed
+        user_id: ID of the user who made the change
+        action: Type of action (created, updated, deleted, completed, uncompleted)
+        field_name: Name of the field that changed (for updates)
+        old_value: Previous value (for updates)
+        new_value: New value (for updates/creates)
+    """
+    history_entry = TaskHistory(
+        task_id=task_id,
+        user_id=user_id,
+        action=action,
+        field_name=field_name,
+        old_value=old_value,
+        new_value=new_value,
+    )
+    session.add(history_entry)
+    session.commit()
 
 
 @router.get("/{user_id}/tasks", response_model=list[TaskResponse])
@@ -92,6 +125,16 @@ def create_task(
     session.add(task)
     session.commit()
     session.refresh(task)
+
+    # Log creation to history
+    log_task_history(
+        session=session,
+        task_id=task.id,
+        user_id=user_id,
+        action="created",
+        new_value=task.title,
+    )
+
     return task
 
 
@@ -168,7 +211,18 @@ def update_task(
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
 
+    # Log each field change
     for field, value in update_data.items():
+        old_value = getattr(task, field)
+        log_task_history(
+            session=session,
+            task_id=task_id,
+            user_id=user_id,
+            action="updated",
+            field_name=field,
+            old_value=str(old_value) if old_value is not None else None,
+            new_value=str(value) if value is not None else None,
+        )
         setattr(task, field, value)
 
     task.updated_at = datetime.utcnow()
@@ -205,6 +259,15 @@ def delete_task(
     task = session.get(Task, task_id)
     if not task or task.user_id != user_id:
         raise HTTPException(status_code=404, detail="Task not found")
+
+    # Log deletion before deleting
+    log_task_history(
+        session=session,
+        task_id=task_id,
+        user_id=user_id,
+        action="deleted",
+        old_value=task.title,
+    )
 
     # Delete task
     session.delete(task)
@@ -243,9 +306,55 @@ def toggle_task_complete(
         raise HTTPException(status_code=404, detail="Task not found")
 
     # Toggle completion
+    old_completed = task.completed
     task.completed = not task.completed
     task.updated_at = datetime.utcnow()
+
+    # Log completion status change
+    log_task_history(
+        session=session,
+        task_id=task_id,
+        user_id=user_id,
+        action="completed" if task.completed else "uncompleted",
+        field_name="completed",
+        old_value=str(old_completed),
+        new_value=str(task.completed),
+    )
+
     session.add(task)
     session.commit()
     session.refresh(task)
     return task
+
+
+@router.get("/{user_id}/history", response_model=list[TaskHistoryResponse])
+def get_task_history(
+    user_id: str,
+    session: Session = Depends(get_session),
+    authenticated_user_id: str = Depends(verify_jwt),
+) -> list[TaskHistory]:
+    """
+    Get task history for authenticated user.
+
+    Args:
+        user_id: User ID from path
+        session: Database session
+        authenticated_user_id: User ID from JWT token
+
+    Returns:
+        list[TaskHistory]: List of task history entries
+
+    Raises:
+        HTTPException: 403 if user_id doesn't match authenticated user
+    """
+    if user_id != authenticated_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    # Query history for user, ordered by most recent first
+    statement = (
+        select(TaskHistory)
+        .where(TaskHistory.user_id == user_id)
+        .order_by(TaskHistory.changed_at.desc())
+    )
+    history = session.exec(statement).all()
+    return list(history)

@@ -41,3 +41,14 @@ export interface ChatResponse {
     response: string;
     tool_calls: ToolCall[];
 }
+
+export interface TaskHistory {
+    id: number;
+    task_id: number;
+    user_id: string;
+    action: string;
+    field_name: string | null;
+    old_value: string | null;
+    new_value: string | null;
+    changed_at: string;
+}
