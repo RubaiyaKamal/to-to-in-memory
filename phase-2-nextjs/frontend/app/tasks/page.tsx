@@ -17,8 +17,10 @@ export default function TasksPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeView, setActiveView] = useState<ActionView>(null);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         if (!isAuthenticated()) {
             router.push("/signin");
             return;
@@ -73,6 +75,10 @@ export default function TasksPage() {
         const updatedTask = await api.updateTask(user.id, taskId, data);
         setTasks(tasks.map((t) => (t.id === taskId ? updatedTask : t)));
     };
+
+    if (!mounted) {
+        return null;
+    }
 
     if (!isAuthenticated()) {
         return null;

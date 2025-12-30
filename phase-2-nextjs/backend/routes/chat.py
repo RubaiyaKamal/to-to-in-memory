@@ -1,28 +1,11 @@
-"""Chatbot communication endpoints."""
+from fastapi import APIRouter, HTTPException
+from backend.models import ChatRequest, ChatResponse
+from backend.agent import process_chat
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
-
-from auth import verify_jwt
-from db import get_session
-from models import ChatRequest, ChatResponse
-from agent import process_chat
-
-router = APIRouter(tags=["chat"])
+router = APIRouter()
 
 @router.post("/{user_id}/chat", response_model=ChatResponse)
-async def chat_endpoint(
-    user_id: str,
-    request: ChatRequest,
-    authenticated_user_id: str = Depends(verify_jwt),
-):
-    """
-    Chat endpoint for interaction with Task Buddy AI.
-    """
-    # Verify user_id matches authenticated user
-    if user_id != authenticated_user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
+async def chat_endpoint(user_id: str, request: ChatRequest):
     try:
         response = await process_chat(user_id, request)
         return response

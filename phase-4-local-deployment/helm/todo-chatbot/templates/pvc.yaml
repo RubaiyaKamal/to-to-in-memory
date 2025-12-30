@@ -1,0 +1,35 @@
+{{- /*
+Kubernetes PersistentVolumeClaim for Todo Chatbot Database
+Task 3.2: Helm Templates
+Reference: specs/003-local-k8s-deployment/tasks.md
+
+This template creates a PVC for persistent SQLite database storage.
+Conditionally created based on .Values.backend.persistence.enabled
+*/ -}}
+{{- if .Values.backend.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: todo-chatbot-data
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+    component: backend
+  annotations:
+    description: "Persistent storage for SQLite database"
+    volume.beta.kubernetes.io/storage-class: {{ .Values.backend.persistence.storageClass | quote }}
+spec:
+  # Access mode: Single pod can mount volume for read/write
+  accessModes:
+    - {{ .Values.backend.persistence.accessMode }}
+
+  # Storage requirements
+  resources:
+    requests:
+      storage: {{ .Values.backend.persistence.size }}
+
+  # Storage class (Minikube default)
+  {{- if .Values.backend.persistence.storageClass }}
+  storageClassName: {{ .Values.backend.persistence.storageClass }}
+  {{- end }}
+{{- end }}

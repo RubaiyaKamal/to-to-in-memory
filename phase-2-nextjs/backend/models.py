@@ -8,7 +8,6 @@ from sqlmodel import Field as SQLField
 from sqlmodel import SQLModel
 
 
-
 # Database Models
 class User(SQLModel, table=True):
     """User model (managed by Better Auth)."""
@@ -38,30 +37,6 @@ class Task(SQLModel, table=True):
     category: Optional[str] = SQLField(default=None, max_length=100)
     created_at: datetime = SQLField(default_factory=datetime.utcnow)
     updated_at: datetime = SQLField(default_factory=datetime.utcnow)
-
-
-class Conversation(SQLModel, table=True):
-    """Chat conversation history."""
-
-    __tablename__ = "conversations"
-
-    id: Optional[int] = SQLField(default=None, primary_key=True)
-    user_id: str = SQLField(foreign_key="users.id", index=True)
-    created_at: datetime = SQLField(default_factory=datetime.utcnow)
-    updated_at: datetime = SQLField(default_factory=datetime.utcnow)
-
-
-class Message(SQLModel, table=True):
-    """Chat message history."""
-
-    __tablename__ = "messages"
-
-    id: Optional[int] = SQLField(default=None, primary_key=True)
-    user_id: str = SQLField(foreign_key="users.id", index=True)
-    conversation_id: int = SQLField(foreign_key="conversations.id", index=True)
-    role: str = SQLField(max_length=50)  # "user" or "assistant"
-    content: str = SQLField()
-    created_at: datetime = SQLField(default_factory=datetime.utcnow)
 
 
 # Request/Response Models
@@ -116,23 +91,55 @@ class TaskResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Pydantic config."""
 
-        from_attributes = True
+class Conversation(SQLModel, table=True):
+    id: Optional[int] = SQLField(default=None, primary_key=True)
+    user_id: str
+    created_at: datetime = SQLField(default_factory=datetime.utcnow, nullable=False)
+    updated_at: datetime = SQLField(default_factory=datetime.utcnow, nullable=False)
 
+class Message(SQLModel, table=True):
+    id: Optional[int] = SQLField(default=None, primary_key=True)
+    user_id: str
+    conversation_id: int = SQLField(foreign_key="conversation.id")
+    role: str  # "user" or "assistant"
+    content: str
+    created_at: datetime = SQLField(default_factory=datetime.utcnow, nullable=False)
 
 class ChatRequest(BaseModel):
-    """Request model for chatbot interaction."""
-
-    message: str = Field(min_length=1)
+    message: str
     conversation_id: Optional[int] = None
     language: str = "en"
 
-
 class ChatResponse(BaseModel):
-    """Response model for chatbot interaction."""
-
     conversation_id: int
     response: str
     tool_calls: list[dict] = []
+
+
+class TaskHistory(SQLModel, table=True):
+    """Task history audit log model."""
+
+    __tablename__ = "task_history"
+
+    id: Optional[int] = SQLField(default=None, primary_key=True)
+    task_id: int = SQLField(index=True)
+    user_id: str = SQLField(index=True)
+    action: str = SQLField(max_length=50)  # created, updated, deleted, completed, uncompleted
+    field_name: Optional[str] = SQLField(default=None, max_length=100)
+    old_value: Optional[str] = SQLField(default=None)
+    new_value: Optional[str] = SQLField(default=None)
+    changed_at: datetime = SQLField(default_factory=datetime.utcnow)
+
+
+class TaskHistoryResponse(BaseModel):
+    """Response model for task history data."""
+
+    id: int
+    task_id: int
+    user_id: str
+    action: str
+    field_name: Optional[str]
+    old_value: Optional[str]
+    new_value: Optional[str]
+    changed_at: datetime

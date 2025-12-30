@@ -1,6 +1,6 @@
-import type { Task, TaskCreate, TaskUpdate } from "@/types/task";
+import type { Task, TaskCreate, TaskUpdate, TaskHistory } from "@/types/task";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://to-to-in-memory-backend.onrender.com';
 console.log('🔍 API_URL loaded:', API_URL);
 
 /**
@@ -128,5 +128,26 @@ export const api = {
             throw new Error("Failed to toggle task");
         }
         return response.json();
+    },
+
+    /**
+     * Get task history for user
+     */
+    async getHistory(userId: string): Promise<TaskHistory[]> {
+        try {
+            const headers = getAuthHeaders();
+            console.log('Fetching history from:', `${API_URL}/api/${userId}/history`);
+            const response = await fetch(`${API_URL}/api/${userId}/history`, { headers });
+            console.log('History response status:', response.status);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Failed to fetch history: ${response.status}`);
+            }
+            return response.json();
+        } catch (error) {
+            console.error('Fetch history error:', error);
+            throw error;
+        }
     },
 };

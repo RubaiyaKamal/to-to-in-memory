@@ -1,0 +1,39 @@
+# Helm Chart Metadata for Todo Chatbot
+# Task 3.1: Helm Chart Structure
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This Chart.yaml defines the metadata for the Todo Chatbot Helm chart.
+# The chart deploys a full-stack application with FastAPI backend and Next.js frontend.
+
+apiVersion: v2
+name: todo-chatbot
+description: A Helm chart for Todo Chatbot application with AI-powered chat interface
+type: application
+
+# Chart version (semantic versioning)
+version: 1.0.0
+
+# Application version
+appVersion: "1.0.0"
+
+# Keywords for chart discovery
+keywords:
+  - todo
+  - chatbot
+  - ai
+  - openai
+  - fastapi
+  - nextjs
+  - kubernetes
+
+# Chart maintainers
+maintainers:
+  - name: Todo Team
+    email: team@example.com
+
+# Source code repository
+sources:
+  - https://github.com/your-org/to-do-in-memory
+
+# Chart icon (optional)
+# icon: https://example.com/icon.png

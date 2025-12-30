@@ -1,0 +1,39 @@
+# Kubernetes Service for Todo Chatbot Frontend
+# Task 2.8: Create Frontend Service with NodePort
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This NodePort service provides external access to the Next.js frontend.
+# - Service DNS: todo-chatbot-frontend.todo-chatbot.svc.cluster.local
+# - Internal Port: 80
+# - NodePort: 30080 (external access via Minikube)
+# - Access URL: http://<minikube-ip>:30080
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-chatbot-frontend
+  namespace: todo-chatbot
+  labels:
+    app: todo-chatbot-frontend
+    component: frontend
+    managed-by: kustomize
+  annotations:
+    description: "NodePort service for external access to frontend"
+spec:
+  # NodePort: External access to frontend (for development/testing)
+  type: NodePort
+
+  # Selector must match frontend deployment pod labels
+  selector:
+    app: todo-chatbot-frontend
+
+  # Port configuration
+  ports:
+  - name: http
+    port: 80           # Service port (internal cluster access)
+    targetPort: 80     # Container port in frontend pods
+    nodePort: 30080    # External port (access via Minikube IP)
+    protocol: TCP
+
+  # Session affinity: None for stateless frontend
+  sessionAffinity: None

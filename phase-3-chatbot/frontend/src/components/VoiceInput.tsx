@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Mic, MicOff } from 'lucide-react';
-import { Language } from '../lib/translations';
+import { useState, useEffect } from 'react';
+import { Mic } from 'lucide-react';
 
 interface VoiceInputProps {
     onSpeechResult: (text: string) => void;
-    language: Language;
 }
 
-export default function VoiceInput({ onSpeechResult, language }: VoiceInputProps) {
+export default function VoiceInput({ onSpeechResult }: VoiceInputProps) {
     const [isListening, setIsListening] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [recognition, setRecognition] = useState<any>(null);
 
     useEffect(() => {
@@ -23,7 +20,6 @@ export default function VoiceInput({ onSpeechResult, language }: VoiceInputProps
 
             recognitionInstance.onstart = () => {
                 setIsListening(true);
-                setError(null);
             };
 
             recognitionInstance.onend = () => {

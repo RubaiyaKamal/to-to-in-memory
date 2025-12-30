@@ -1,0 +1,139 @@
+# Helm Values for Local/Minikube Environment
+# Task 3.3: Helm Values Examples
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# Usage:
+#   helm install todo-chatbot ./phase-4-local-deployment/helm/todo-chatbot \
+#     -f phase-4-local-deployment/helm/todo-chatbot/values-local.yaml \
+#     --set secrets.OPENAI_API_KEY="sk-proj-..." \
+#     --set secrets.BETTER_AUTH_SECRET="..."
+
+# Global settings
+global:
+  environment: local
+
+# Namespace configuration
+namespace:
+  create: true
+  name: todo-chatbot
+
+# ConfigMap - Non-sensitive configuration
+config:
+  DATABASE_URL: "sqlite:////app/data/todo.db"
+  LOG_LEVEL: "DEBUG"  # Debug logging for local development
+  CORS_ORIGINS: "http://localhost:3000,http://todo-chatbot-frontend.todo-chatbot.svc.cluster.local,http://localhost:30080"
+  BETTER_AUTH_URL: "http://localhost:8001"
+  BACKEND_PORT: "8001"
+  FRONTEND_PORT: "80"
+  VITE_API_URL: "http://todo-chatbot-backend:8001"
+
+# Secrets - MUST be overridden with actual values
+secrets:
+  OPENAI_API_KEY: "REPLACE_WITH_YOUR_OPENAI_API_KEY"
+  BETTER_AUTH_SECRET: "REPLACE_WITH_YOUR_SECRET_MIN_32_CHARS"
+
+# Backend configuration
+backend:
+  enabled: true
+  replicaCount: 1  # Single replica for local development
+
+  image:
+    repository: todo-chatbot-backend
+    tag: latest
+    pullPolicy: IfNotPresent  # Use local images from Minikube
+
+  service:
+    type: ClusterIP
+    port: 8001
+    targetPort: 8001
+
+  # Lower resource limits for local development
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+  # Persistent storage for SQLite database
+  persistence:
+    enabled: true
+    storageClass: "standard"  # Minikube default
+    accessMode: ReadWriteOnce
+    size: 500Mi  # Smaller size for local
+    mountPath: /app/data
+
+  livenessProbe:
+    enabled: true
+    path: /api/health
+    initialDelaySeconds: 20  # Faster startup for local
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    path: /api/health
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 1  # Single replica for local development
+
+  image:
+    repository: todo-chatbot-frontend
+    tag: latest
+    pullPolicy: IfNotPresent  # Use local images from Minikube
+
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30080  # Fixed port for local access
+
+  # Lower resource limits for local development
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
+
+  livenessProbe:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 3
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 3
+
+# Autoscaling - disabled for local
+autoscaling:
+  backend:
+    enabled: false
+  frontend:
+    enabled: false
+
+# Ingress - disabled for local (using NodePort)
+ingress:
+  enabled: false
+
+# Additional labels
+labels:
+  app: todo-chatbot
+  managed-by: helm
+  environment: local

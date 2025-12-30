@@ -1,0 +1,37 @@
+{{- /*
+Kubernetes ConfigMap for Todo Chatbot
+Task 3.2: Helm Templates
+Reference: specs/003-local-k8s-deployment/tasks.md
+
+This template creates a ConfigMap containing non-sensitive configuration.
+Values are referenced from .Values.config
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-chatbot-config
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+    component: config
+  annotations:
+    description: "Non-sensitive configuration for Todo Chatbot"
+data:
+  # Database Configuration
+  DATABASE_URL: {{ .Values.config.DATABASE_URL | quote }}
+
+  # Better Auth Configuration
+  BETTER_AUTH_URL: {{ .Values.config.BETTER_AUTH_URL | quote }}
+
+  # Logging Configuration
+  LOG_LEVEL: {{ .Values.config.LOG_LEVEL | quote }}
+
+  # CORS Configuration
+  CORS_ORIGINS: {{ .Values.config.CORS_ORIGINS | quote }}
+
+  # Application Configuration
+  BACKEND_PORT: {{ .Values.config.BACKEND_PORT | quote }}
+  FRONTEND_PORT: {{ .Values.config.FRONTEND_PORT | quote }}
+
+  # Frontend Configuration
+  VITE_API_URL: {{ .Values.config.VITE_API_URL | quote }}

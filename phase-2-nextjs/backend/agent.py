@@ -7,26 +7,23 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from openai import AsyncOpenAI
 import json
-from datetime import datetime
 
-from db import engine
-from models import User, Conversation, Message, ChatRequest, ChatResponse
+from backend.db import engine
+from backend.models import Conversation, Message, ChatRequest, ChatResponse
 
-def ensure_user_exists(user_id: str, session: Session) -> None:
-    """Ensure user exists in database for conversations."""
-    user = session.get(User, user_id)
-    if not user:
-        # Create mock user
-        user = User(
-            id=user_id,
-            email=f"{user_id}@example.com",
-            password_hash="mock-hash"
-        )
-        session.add(user)
-        session.commit()
+# Initialize OpenAI Client (Lazy)
+client = None
 
-# Initialize OpenAI Client
-client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+def get_client():
+    global client
+    if not client:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            print("CRITICAL: OPENAI_API_KEY is not set in environment!")
+        else:
+            print(f"DEBUG: OPENAI_API_KEY found starting with {api_key[:8]}...")
+        client = AsyncOpenAI(api_key=api_key)
+    return client
 
 async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
     """
@@ -35,7 +32,6 @@ async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
     """
     # 1. Get or Create Conversation & Store User Message
     with Session(engine) as session:
-        ensure_user_exists(user_id, session)
         if request.conversation_id:
             conversation = session.get(Conversation, request.conversation_id)
             if not conversation or conversation.user_id != user_id:
@@ -69,17 +65,9 @@ async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
 
         messages = [{"role": msg.role, "content": msg.content} for msg in history_msgs]
 
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    current_day = datetime.now().strftime("%A")
-
     if request.language == 'ur':
         SYSTEM_PROMPT = f"""
     You are Task Buddy, a smart and efficient Todo AI.
-
-    **CURRENT DATE CONTEXT:**
-    - Today is: **{current_day}, {current_date}**
-    - Use this date as the absolute reference for all relative time mentions like "tomorrow", "next week", "yesterday", etc.
-    - If today is {current_date}, tomorrow is {(datetime.now().replace(day=datetime.now().day+1) if datetime.now().day < 28 else datetime.now()).strftime("%Y-%m-%d")} (AI: please calculate tomorrow correctly based on {current_date}).
 
     **CRITICAL INSTRUCTION:**
     - You are acting for User ID: **{user_id}**
@@ -156,11 +144,6 @@ async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
     else:
         SYSTEM_PROMPT = f"""
     You are Task Buddy, a smart and efficient Todo AI.
-
-    **CURRENT DATE CONTEXT:**
-    - Today is: **{current_day}, {current_date}**
-    - Use this date as the absolute reference for all relative time mentions like "tomorrow", "next week", "yesterday", etc.
-    - If today is {current_date}, tomorrow is {(datetime.now().replace(day=datetime.now().day+1) if datetime.now().day < 28 else datetime.now()).strftime("%Y-%m-%d")} (AI: please calculate tomorrow correctly based on {current_date}).
 
     **CRITICAL INSTRUCTION:**
     - You are acting for User ID: **{user_id}**
@@ -239,6 +222,7 @@ async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
     # 4. MCP & OpenAI Interaction (Outside of DB Session)
     # We need to run the MCP server as a subprocess
     python_exe = sys.executable
+    print(f"DEBUG: Agent using python: {python_exe}")
     script_path = os.path.join(os.path.dirname(__file__), "mcp_server.py")
 
     server_params = StdioServerParameters(
@@ -271,11 +255,8 @@ async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
                     })
 
                 # Call OpenAI
-                # Forcefully inject date context into the LAST message if it's from user
-                if messages and messages[-1]["role"] == "user":
-                    messages[-1]["content"] += f"\n\n(Context: Today is {current_day}, {current_date})"
-
-                response = await client.chat.completions.create(
+                client_instance = get_client()
+                response = await client_instance.chat.completions.create(
                     model="gpt-4o",
                     messages=messages,
                     tools=openai_tools,
@@ -301,6 +282,8 @@ async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
                         result = await mcp_session.call_tool(tool_name, arguments=tool_args)
 
                         # Add tool result to messages
+                        # MCP CallToolResult might have multiple contents (text/image)
+                        # We assume text for now
                         tool_output = ""
                         if result.content:
                             for content in result.content:
@@ -314,7 +297,8 @@ async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
                         })
 
                     # Follow-up call to OpenAI to get final response
-                    second_response = await client.chat.completions.create(
+                    client_instance = get_client()
+                    second_response = await client_instance.chat.completions.create(
                         model="gpt-4o",
                         messages=messages
                     )
@@ -322,14 +306,24 @@ async def process_chat(user_id: str, request: ChatRequest) -> ChatResponse:
                 else:
                     final_response_content = response_message.content
     except Exception as e:
-        print(f"MCP Error: {e}")
+        print(f"MCP Error: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
-        final_response_content = f"Oops! I encountered an error: {str(e)}"
+        # If it's an exception group, print sub-exceptions
+        if hasattr(e, 'exceptions'):
+            for i, sub_exc in enumerate(e.exceptions):
+                print(f"--- Sub-exception {i+1} ---")
+                print(f"{type(sub_exc).__name__}: {sub_exc}")
+                try:
+                    traceback.print_exception(type(sub_exc), sub_exc, sub_exc.__traceback__)
+                except:
+                    pass
+
+        final_response_content = f"Oops! I encountered an error: {e}"
 
     # 5. Store Assistant Response (New Session)
     with Session(engine) as session:
-        # Re-fetch conversation to ensure it exists
+        # Re-fetch conversation to ensure it exists (it should)
         assistant_msg = Message(
             user_id=user_id,
             conversation_id=conversation_id,

@@ -1,0 +1,234 @@
+{
+  "examples": [
+    {
+      "tool": "add_task",
+      "description": "Create a new task",
+      "request": {
+        "user_id": "user123",
+        "title": "Buy groceries",
+        "description": "Milk, bread, eggs"
+      },
+      "response": {
+        "status": "success",
+        "task_id": 42,
+        "title": "Buy groceries",
+        "message": "✓ Created task: Buy groceries"
+      }
+    },
+    {
+      "tool": "list_tasks",
+      "description": "List all tasks",
+      "request": {
+        "user_id": "user123",
+        "status": "all"
+      },
+      "response": {
+        "status": "success",
+        "tasks": [
+          {
+            "id": 42,
+            "title": "Buy groceries",
+            "description": "Milk, bread, eggs",
+            "completed": false,
+            "icon": "☐",
+            "created": "2025-12-25"
+          },
+          {
+            "id": 41,
+            "title": "Call mom",
+            "description": null,
+            "completed": true,
+            "icon": "✓",
+            "created": "2025-12-24"
+          }
+        ],
+        "summary": {
+          "total": 2,
+          "completed": 1,
+          "pending": 1
+        },
+        "message": "Found 2 tasks (1 completed, 1 pending)"
+      }
+    },
+    {
+      "tool": "list_tasks",
+      "description": "List only pending tasks",
+      "request": {
+        "user_id": "user123",
+        "status": "pending",
+        "limit": 5
+      },
+      "response": {
+        "status": "success",
+        "tasks": [
+          {
+            "id": 42,
+            "title": "Buy groceries",
+            "description": "Milk, bread, eggs",
+            "completed": false,
+            "icon": "☐",
+            "created": "2025-12-25"
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "completed": 0,
+          "pending": 1
+        },
+        "message": "Found 1 tasks (0 completed, 1 pending)"
+      }
+    },
+    {
+      "tool": "complete_task",
+      "description": "Mark a task as complete",
+      "request": {
+        "user_id": "user123",
+        "task_id": 42
+      },
+      "response": {
+        "status": "success",
+        "task_id": 42,
+        "title": "Buy groceries",
+        "completed": true,
+        "message": "✓ Marked 'Buy groceries' as completed"
+      }
+    },
+    {
+      "tool": "complete_task",
+      "description": "Toggle completion (uncomplete)",
+      "request": {
+        "user_id": "user123",
+        "task_id": 42
+      },
+      "response": {
+        "status": "success",
+        "task_id": 42,
+        "title": "Buy groceries",
+        "completed": false,
+        "message": "☐ Marked 'Buy groceries' as pending"
+      }
+    },
+    {
+      "tool": "update_task",
+      "description": "Update task title and description",
+      "request": {
+        "user_id": "user123",
+        "task_id": 42,
+        "title": "Buy organic groceries",
+        "description": "Organic milk, whole wheat bread, free-range eggs"
+      },
+      "response": {
+        "status": "success",
+        "task_id": 42,
+        "title": "Buy organic groceries",
+        "description": "Organic milk, whole wheat bread, free-range eggs",
+        "message": "✓ Updated task: Buy organic groceries"
+      }
+    },
+    {
+      "tool": "update_task",
+      "description": "Update only title",
+      "request": {
+        "user_id": "user123",
+        "task_id": 42,
+        "title": "Buy groceries today"
+      },
+      "response": {
+        "status": "success",
+        "task_id": 42,
+        "title": "Buy groceries today",
+        "description": "Milk, bread, eggs",
+        "message": "✓ Updated task: Buy groceries today"
+      }
+    },
+    {
+      "tool": "delete_task",
+      "description": "Delete a task permanently",
+      "request": {
+        "user_id": "user123",
+        "task_id": 42
+      },
+      "response": {
+        "status": "success",
+        "message": "✗ Deleted task: Buy groceries"
+      }
+    },
+    {
+      "tool": "complete_task",
+      "description": "Error: task not found",
+      "request": {
+        "user_id": "user123",
+        "task_id": 999
+      },
+      "response": {
+        "status": "error",
+        "message": "Task #999 not found"
+      }
+    },
+    {
+      "tool": "complete_task",
+      "description": "Error: unauthorized access",
+      "request": {
+        "user_id": "user123",
+        "task_id": 55
+      },
+      "response": {
+        "status": "error",
+        "message": "You don't have permission to modify this task"
+      },
+      "note": "Task #55 belongs to a different user"
+    }
+  ],
+  "conversation_examples": [
+    {
+      "description": "New conversation - add task",
+      "user_message": "Add a task: Buy groceries",
+      "agent_calls_tool": "add_task",
+      "tool_params": {
+        "title": "Buy groceries"
+      },
+      "agent_response": "✓ I've added 'Buy groceries' to your list."
+    },
+    {
+      "description": "List tasks",
+      "user_message": "What do I need to do?",
+      "agent_calls_tool": "list_tasks",
+      "tool_params": {
+        "status": "all"
+      },
+      "agent_response": "You have 2 tasks:\n☐ Buy groceries\n☐ Call mom\n\nBoth are pending. Would you like to mark any as complete?"
+    },
+    {
+      "description": "Complete task by reference",
+      "context": "Previous message listed tasks",
+      "user_message": "I finished the first one",
+      "agent_calls_tool": "complete_task",
+      "tool_params": {
+        "task_id": 42
+      },
+      "agent_response": "✓ Marked 'Buy groceries' as completed. Great job!"
+    },
+    {
+      "description": "Multi-turn with context",
+      "turns": [
+        {
+          "user": "Show my tasks",
+          "tool": "list_tasks",
+          "assistant": "You have 3 tasks (1 completed, 2 pending):\n✓ Buy groceries\n☐ Call mom\n☐ Finish report"
+        },
+        {
+          "user": "Delete the last one",
+          "tool": "delete_task",
+          "params": {"task_id": 44},
+          "assistant": "✗ Deleted 'Finish report'. Is there anything else I can help with?"
+        },
+        {
+          "user": "Add a new task: Review budget",
+          "tool": "add_task",
+          "params": {"title": "Review budget"},
+          "assistant": "✓ Added 'Review budget' to your list."
+        }
+      ]
+    }
+  ]
+}

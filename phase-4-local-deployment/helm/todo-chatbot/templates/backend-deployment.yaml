@@ -1,0 +1,137 @@
+{{- /*
+Kubernetes Deployment for Todo Chatbot Backend
+Task 3.2: Helm Templates
+Reference: specs/003-local-k8s-deployment/tasks.md
+
+This template creates the FastAPI backend deployment with:
+- High availability (configurable replicas)
+- Health checks (liveness and readiness probes)
+- Resource limits
+- Persistent storage for SQLite database
+- Environment configuration from ConfigMap and Secret
+*/ -}}
+{{- if .Values.backend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-chatbot-backend
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+    component: backend
+  annotations:
+    description: "FastAPI backend deployment with SQLite database"
+spec:
+  # High availability: configurable replicas
+  replicas: {{ .Values.backend.replicaCount }}
+
+  # Rolling update strategy for zero-downtime deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  # Selector to match pod labels
+  selector:
+    matchLabels:
+      app: todo-chatbot-backend
+
+  # Pod template
+  template:
+    metadata:
+      labels:
+        app: todo-chatbot-backend
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        # Container image
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+
+        # Container port
+        ports:
+        - containerPort: {{ .Values.backend.service.targetPort }}
+          name: http
+          protocol: TCP
+
+        # Environment variables from ConfigMap and Secret
+        env:
+        # From Secret (sensitive data)
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: todo-chatbot-secret
+              key: OPENAI_API_KEY
+        - name: BETTER_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: todo-chatbot-secret
+              key: BETTER_AUTH_SECRET
+
+        # From ConfigMap (non-sensitive configuration)
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: DATABASE_URL
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: LOG_LEVEL
+        - name: CORS_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: CORS_ORIGINS
+        - name: BETTER_AUTH_URL
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: BETTER_AUTH_URL
+
+        # Resource limits and requests
+        resources:
+          {{- toYaml .Values.backend.resources | nindent 10 }}
+
+        # Liveness probe - restarts container if unhealthy
+        {{- if .Values.backend.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.backend.livenessProbe.path }}
+            port: {{ .Values.backend.service.targetPort }}
+          initialDelaySeconds: {{ .Values.backend.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.backend.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.backend.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.backend.livenessProbe.failureThreshold }}
+        {{- end }}
+
+        # Readiness probe - removes from service if not ready
+        {{- if .Values.backend.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.backend.readinessProbe.path }}
+            port: {{ .Values.backend.service.targetPort }}
+          initialDelaySeconds: {{ .Values.backend.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.backend.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.backend.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.backend.readinessProbe.failureThreshold }}
+        {{- end }}
+
+        # Volume mounts
+        {{- if .Values.backend.persistence.enabled }}
+        volumeMounts:
+        - name: backend-data
+          mountPath: {{ .Values.backend.persistence.mountPath }}
+        {{- end }}
+
+      # Volumes
+      {{- if .Values.backend.persistence.enabled }}
+      volumes:
+      - name: backend-data
+        persistentVolumeClaim:
+          claimName: todo-chatbot-data
+      {{- end }}
+{{- end }}
