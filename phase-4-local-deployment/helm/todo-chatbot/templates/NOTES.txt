@@ -1,0 +1,110 @@
+{{- /*
+NOTES.txt - Post-Installation Instructions
+Task 3.2: Helm Templates
+Reference: specs/003-local-k8s-deployment/tasks.md
+
+This file displays helpful information after helm install/upgrade
+*/ -}}
+🎉 Todo Chatbot has been deployed to Kubernetes!
+
+Chart: {{ .Chart.Name }} v{{ .Chart.Version }}
+Release: {{ .Release.Name }}
+Namespace: {{ .Values.namespace.name }}
+Environment: {{ .Values.global.environment }}
+
+📦 Deployed Resources:
+  ✓ Namespace: {{ .Values.namespace.name }}
+  ✓ ConfigMap: todo-chatbot-config
+  ✓ Secret: todo-chatbot-secret
+{{- if .Values.backend.enabled }}
+  ✓ Backend Deployment: {{ .Values.backend.replicaCount }} replicas
+  ✓ Backend Service: ClusterIP (port {{ .Values.backend.service.port }})
+{{- if .Values.backend.persistence.enabled }}
+  ✓ PersistentVolumeClaim: {{ .Values.backend.persistence.size }} storage
+{{- end }}
+{{- end }}
+{{- if .Values.frontend.enabled }}
+  ✓ Frontend Deployment: {{ .Values.frontend.replicaCount }} replicas
+  ✓ Frontend Service: {{ .Values.frontend.service.type }} (port {{ .Values.frontend.service.port }})
+{{- end }}
+
+🔍 Check Deployment Status:
+
+  # View all resources
+  kubectl get all -n {{ .Values.namespace.name }}
+
+  # Check pod status
+  kubectl get pods -n {{ .Values.namespace.name }}
+
+  # View pod logs
+{{- if .Values.backend.enabled }}
+  kubectl logs -n {{ .Values.namespace.name }} -l app=todo-chatbot-backend
+{{- end }}
+{{- if .Values.frontend.enabled }}
+  kubectl logs -n {{ .Values.namespace.name }} -l app=todo-chatbot-frontend
+{{- end }}
+
+  # Describe resources
+  kubectl describe deployment -n {{ .Values.namespace.name }}
+
+🌐 Access the Application:
+{{- if .Values.frontend.enabled }}
+{{- if eq .Values.frontend.service.type "NodePort" }}
+
+  # Get Minikube IP
+  minikube ip
+
+  # Access the frontend at:
+  http://$(minikube ip):{{ .Values.frontend.service.nodePort }}
+
+  # Or open in browser directly:
+  minikube service todo-chatbot-frontend -n {{ .Values.namespace.name }}
+{{- else if eq .Values.frontend.service.type "LoadBalancer" }}
+
+  # Get the external IP (may take a few minutes):
+  kubectl get svc todo-chatbot-frontend -n {{ .Values.namespace.name }}
+
+  # Access at: http://<EXTERNAL-IP>:{{ .Values.frontend.service.port }}
+{{- end }}
+{{- end }}
+
+🔧 Troubleshooting:
+
+  # If pods are not starting:
+  kubectl describe pod <pod-name> -n {{ .Values.namespace.name }}
+
+  # If ImagePullBackOff error:
+  # Ensure Docker images are loaded to Minikube:
+  eval $(minikube docker-env)
+  docker images | grep todo-chatbot
+
+  # Check events:
+  kubectl get events -n {{ .Values.namespace.name }} --sort-by='.lastTimestamp'
+
+⚙️  Configuration:
+
+  Backend API: {{ .Values.config.VITE_API_URL }}
+  Database: {{ .Values.config.DATABASE_URL }}
+  Log Level: {{ .Values.config.LOG_LEVEL }}
+
+{{- if or (contains "REPLACE" .Values.secrets.OPENAI_API_KEY) (contains "REPLACE" .Values.secrets.BETTER_AUTH_SECRET) }}
+
+⚠️  WARNING: Default secret values detected!
+   Please update secrets with actual values:
+
+   helm upgrade {{ .Release.Name }} ./phase-4-local-deployment/helm/todo-chatbot \
+     --set secrets.OPENAI_API_KEY="sk-proj-your-key" \
+     --set secrets.BETTER_AUTH_SECRET="your-secret-min-32-chars"
+{{- end }}
+
+📚 Documentation:
+  Chart README: phase-4-local-deployment/helm/todo-chatbot/README.md
+  Tasks: specs/003-local-k8s-deployment/tasks.md
+
+🔄 Upgrade Release:
+  helm upgrade {{ .Release.Name }} ./phase-4-local-deployment/helm/todo-chatbot -f custom-values.yaml
+
+🗑️  Uninstall Release:
+  helm uninstall {{ .Release.Name }}
+
+For more information, run: helm status {{ .Release.Name }}

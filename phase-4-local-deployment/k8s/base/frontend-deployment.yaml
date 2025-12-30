@@ -1,53 +1,93 @@
+# Kubernetes Deployment for Todo Chatbot Frontend
+# Task 2.7: Create Frontend Deployment
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This deployment runs the Next.js frontend application with:
+# - High availability (2 replicas)
+# - Health checks (liveness and readiness probes)
+# - Resource limits (CPU and memory)
+# - Stateless architecture (no persistent storage)
+# - Environment configuration (ConfigMap)
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo-chatbot-frontend
   namespace: todo-chatbot
   labels:
-    app: todo-chatbot
+    app: todo-chatbot-frontend
     component: frontend
+    managed-by: kustomize
+  annotations:
+    description: "Next.js frontend deployment served by nginx"
 spec:
+  # High availability: 2 replicas for redundancy
   replicas: 2
+
+  # Rolling update strategy for zero-downtime deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1  # Maximum 1 pod can be unavailable during update
+      maxSurge: 1        # Maximum 1 extra pod during update
+
+  # Selector to match pod labels
   selector:
     matchLabels:
-      app: todo-chatbot
-      component: frontend
+      app: todo-chatbot-frontend
+
+  # Pod template
   template:
     metadata:
       labels:
-        app: todo-chatbot
+        app: todo-chatbot-frontend
         component: frontend
     spec:
       containers:
       - name: frontend
+        # Container image (built in Task 1.2, loaded to Minikube in Task 4.2)
         image: todo-chatbot-frontend:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: IfNotPresent  # Use local image from Minikube
+
+        # Container port (nginx serves on port 80)
         ports:
         - containerPort: 80
           name: http
+          protocol: TCP
+
+        # Environment variables from ConfigMap
         env:
         - name: VITE_API_URL
-          value: "http://todo-chatbot-backend:8001"
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: VITE_API_URL
+
+        # Resource limits and requests
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "128Mi"  # Minimum memory required
+            cpu: "100m"      # Minimum CPU required (0.1 cores)
           limits:
-            memory: "256Mi"
-            cpu: "200m"
+            memory: "256Mi"  # Maximum memory allowed
+            cpu: "200m"      # Maximum CPU allowed (0.2 cores)
+
+        # Liveness probe - restarts container if unhealthy
         livenessProbe:
           httpGet:
             path: /health
             port: 80
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
+          initialDelaySeconds: 10  # Wait 10s after startup before checking
+          periodSeconds: 10        # Check every 10s
+          timeoutSeconds: 3        # Timeout after 3s
+          failureThreshold: 3      # Restart after 3 failed checks
+
+        # Readiness probe - removes from service if not ready
         readinessProbe:
           httpGet:
             path: /health
             port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 2
-          failureThreshold: 3
+          initialDelaySeconds: 5   # Wait 5s after startup before checking
+          periodSeconds: 5         # Check every 5s
+          timeoutSeconds: 2        # Timeout after 2s
+          failureThreshold: 3      # Mark unready after 3 failed checks

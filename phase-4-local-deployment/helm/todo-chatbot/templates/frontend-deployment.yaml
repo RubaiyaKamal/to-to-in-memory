@@ -1,40 +1,74 @@
+{{- /*
+Kubernetes Deployment for Todo Chatbot Frontend
+Task 3.2: Helm Templates
+Reference: specs/003-local-k8s-deployment/tasks.md
+
+This template creates the Next.js frontend deployment with:
+- High availability (configurable replicas)
+- Health checks (liveness and readiness probes)
+- Resource limits
+- Stateless architecture (no persistent storage)
+- Environment configuration from ConfigMap
+*/ -}}
 {{- if .Values.frontend.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "todo-chatbot.fullname" . }}-frontend
+  name: todo-chatbot-frontend
   namespace: {{ .Values.namespace.name }}
   labels:
     {{- include "todo-chatbot.labels" . | nindent 4 }}
     component: frontend
+  annotations:
+    description: "Next.js frontend deployment served by nginx"
 spec:
+  # High availability: configurable replicas
   replicas: {{ .Values.frontend.replicaCount }}
+
+  # Rolling update strategy for zero-downtime deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  # Selector to match pod labels
   selector:
     matchLabels:
-      {{- include "todo-chatbot.selectorLabels" . | nindent 6 }}
-      component: frontend
+      app: todo-chatbot-frontend
+
+  # Pod template
   template:
     metadata:
       labels:
-        {{- include "todo-chatbot.selectorLabels" . | nindent 8 }}
+        app: todo-chatbot-frontend
         component: frontend
     spec:
       containers:
       - name: frontend
+        # Container image
         image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
         imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+
+        # Container port (nginx serves on port 80)
         ports:
-        - name: http
-          containerPort: {{ .Values.frontend.service.targetPort }}
+        - containerPort: {{ .Values.frontend.service.targetPort }}
+          name: http
           protocol: TCP
+
+        # Environment variables from ConfigMap
         env:
         - name: VITE_API_URL
           valueFrom:
             configMapKeyRef:
-              name: {{ include "todo-chatbot.fullname" . }}-config
+              name: todo-chatbot-config
               key: VITE_API_URL
+
+        # Resource limits and requests
         resources:
           {{- toYaml .Values.frontend.resources | nindent 10 }}
+
+        # Liveness probe - restarts container if unhealthy
         {{- if .Values.frontend.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
@@ -45,6 +79,8 @@ spec:
           timeoutSeconds: {{ .Values.frontend.livenessProbe.timeoutSeconds }}
           failureThreshold: {{ .Values.frontend.livenessProbe.failureThreshold }}
         {{- end }}
+
+        # Readiness probe - removes from service if not ready
         {{- if .Values.frontend.readinessProbe.enabled }}
         readinessProbe:
           httpGet:

@@ -1,7 +1,28 @@
+# Kubernetes Namespace for Todo Chatbot Application
+# Task 2.1: Create Kubernetes Namespace and Base Configuration
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This namespace isolates all Todo Chatbot resources in the Kubernetes cluster.
+# All application components (backend, frontend, database, secrets, configmaps)
+# will be deployed within this namespace.
+
 apiVersion: v1
 kind: Namespace
 metadata:
   name: todo-chatbot
   labels:
+    # Application identifier
     app: todo-chatbot
+
+    # Environment designation
     environment: local
+
+    # Phase identifier
+    phase: phase-4
+
+    # Managed by Kustomize
+    managed-by: kustomize
+  annotations:
+    description: "Phase IV - Local Kubernetes Deployment for Todo Chatbot"
+    phase: "4"
+    project: "evolution-of-todo"

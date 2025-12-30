@@ -1,68 +1,132 @@
+# Kubernetes Deployment for Todo Chatbot Backend
+# Task 2.5: Create Backend Deployment
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This deployment runs the FastAPI backend application with:
+# - High availability (2 replicas)
+# - Health checks (liveness and readiness probes)
+# - Resource limits (CPU and memory)
+# - Persistent storage (SQLite database)
+# - Environment configuration (ConfigMap and Secrets)
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo-chatbot-backend
   namespace: todo-chatbot
   labels:
-    app: todo-chatbot
+    app: todo-chatbot-backend
     component: backend
+    managed-by: kustomize
+  annotations:
+    description: "FastAPI backend deployment with SQLite database"
 spec:
+  # High availability: 2 replicas for redundancy
   replicas: 2
+
+  # Rolling update strategy for zero-downtime deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1  # Maximum 1 pod can be unavailable during update
+      maxSurge: 1        # Maximum 1 extra pod during update
+
+  # Selector to match pod labels
   selector:
     matchLabels:
-      app: todo-chatbot
-      component: backend
+      app: todo-chatbot-backend
+
+  # Pod template
   template:
     metadata:
       labels:
-        app: todo-chatbot
+        app: todo-chatbot-backend
         component: backend
     spec:
       containers:
       - name: backend
+        # Container image (built in Task 1.1, loaded to Minikube in Task 4.2)
         image: todo-chatbot-backend:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: IfNotPresent  # Use local image from Minikube
+
+        # Container port
         ports:
         - containerPort: 8001
           name: http
+          protocol: TCP
+
+        # Environment variables from ConfigMap and Secret
         env:
+        # From Secret (sensitive data)
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
               name: todo-chatbot-secret
               key: OPENAI_API_KEY
+        - name: BETTER_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: todo-chatbot-secret
+              key: BETTER_AUTH_SECRET
+
+        # From ConfigMap (non-sensitive configuration)
         - name: DATABASE_URL
           valueFrom:
             configMapKeyRef:
               name: todo-chatbot-config
               key: DATABASE_URL
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: LOG_LEVEL
+        - name: CORS_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: CORS_ORIGINS
+        - name: BETTER_AUTH_URL
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: BETTER_AUTH_URL
+
+        # Resource limits and requests
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
+            memory: "256Mi"  # Minimum memory required
+            cpu: "250m"      # Minimum CPU required (0.25 cores)
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "512Mi"  # Maximum memory allowed
+            cpu: "500m"      # Maximum CPU allowed (0.5 cores)
+
+        # Liveness probe - restarts container if unhealthy
         livenessProbe:
           httpGet:
             path: /api/health
             port: 8001
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
+          initialDelaySeconds: 30  # Wait 30s after startup before checking
+          periodSeconds: 10        # Check every 10s
+          timeoutSeconds: 5        # Timeout after 5s
+          failureThreshold: 3      # Restart after 3 failed checks
+
+        # Readiness probe - removes from service if not ready
         readinessProbe:
           httpGet:
             path: /api/health
             port: 8001
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
+          initialDelaySeconds: 10  # Wait 10s after startup before checking
+          periodSeconds: 5         # Check every 5s
+          timeoutSeconds: 3        # Timeout after 3s
+          failureThreshold: 3      # Mark unready after 3 failed checks
+
+        # Volume mounts
         volumeMounts:
         - name: backend-data
-          mountPath: /app/data
+          mountPath: /app/data  # Mount PVC for SQLite database
+
+      # Volumes
       volumes:
       - name: backend-data
         persistentVolumeClaim:
-          claimName: backend-pvc
+          claimName: todo-chatbot-data  # PVC created in Task 2.4

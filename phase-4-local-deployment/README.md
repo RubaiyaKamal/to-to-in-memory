@@ -85,11 +85,8 @@ cd phase-4-local-deployment
 **OR** Deploy with kubectl:
 
 ```bash
-# Update secret in k8s/base/secret.yaml first
-# Especially: OPENAI_API_KEY
-
-# Deploy using kubectl
-./scripts/deploy-k8s.sh
+# Deploy using kubectl (interactive secret prompts)
+./scripts/deploy-kubectl.sh
 ```
 
 ### 4. Verify Deployment
@@ -137,14 +134,11 @@ For manual control over resources:
 # 2. Build images
 ./scripts/build-images.sh
 
-# 3. Update secret in k8s/base/secret.yaml
-# Edit: OPENAI_API_KEY
+# 3. Deploy (interactive secret prompts)
+./scripts/deploy-kubectl.sh
 
-# 4. Deploy
-./scripts/deploy-k8s.sh
-
-# 5. Verify
-kubectl get all -n todo-chatbot
+# 4. Verify
+./scripts/verify-deployment.sh
 ```
 
 ### Option 3: Helm (Production-Ready)
@@ -158,15 +152,11 @@ For templated, configurable deployments:
 # 2. Build images
 ./scripts/build-images.sh
 
-# 3. Customize values
-# Edit: helm/todo-chatbot/values.yaml
-# Update: backend.secret.OPENAI_API_KEY
-
-# 4. Deploy with Helm
+# 3. Deploy with Helm (interactive secret prompts)
 ./scripts/deploy-helm.sh
 
-# 5. Verify
-helm status todo-chatbot -n todo-chatbot
+# 4. Verify
+./scripts/verify-deployment.sh
 ```
 
 ### Option 4: Kustomize
@@ -233,6 +223,94 @@ kagent "check security best practices for the deployment"
 
 ## 🏗️ Architecture
 
+### Deployment Topology
+
+```mermaid
+graph TB
+    subgraph "Local Machine"
+        User[👤 User]
+        Browser[🌐 Browser]
+    end
+
+    subgraph "Minikube Cluster"
+        subgraph "todo-chatbot Namespace"
+            FrontendSvc[Frontend Service<br/>NodePort 30080]
+            BackendSvc[Backend Service<br/>ClusterIP 8001]
+
+            subgraph "Frontend Deployment"
+                F1[Frontend Pod 1<br/>Nginx + React]
+                F2[Frontend Pod 2<br/>Nginx + React]
+            end
+
+            subgraph "Backend Deployment"
+                B1[Backend Pod 1<br/>FastAPI + OpenAI]
+                B2[Backend Pod 2<br/>FastAPI + OpenAI]
+            end
+
+            PVC[PersistentVolumeClaim<br/>1Gi SQLite DB]
+            Secret[Secret<br/>API Keys]
+            ConfigMap[ConfigMap<br/>Environment Vars]
+        end
+    end
+
+    User -->|http://minikube-ip:30080| Browser
+    Browser -->|HTTP| FrontendSvc
+    FrontendSvc --> F1
+    FrontendSvc --> F2
+    F1 & F2 -->|API Calls| BackendSvc
+    BackendSvc --> B1
+    BackendSvc --> B2
+    B1 & B2 -->|Read/Write| PVC
+    B1 & B2 -.->|Environment| Secret
+    B1 & B2 -.->|Configuration| ConfigMap
+    B1 & B2 -->|OpenAI API| OpenAI[☁️ OpenAI GPT-4]
+
+    style FrontendSvc fill:#4CAF50
+    style BackendSvc fill:#2196F3
+    style PVC fill:#FF9800
+    style Secret fill:#f44336
+    style ConfigMap fill:#9C27B0
+```
+
+### Deployment Workflow
+
+```mermaid
+flowchart TD
+    Start([Start]) --> Minikube[Setup Minikube<br/>setup-minikube.sh]
+    Minikube --> Build[Build Docker Images<br/>build-images.sh]
+    Build --> Choice{Deployment<br/>Method?}
+
+    Choice -->|Helm| Helm[Deploy with Helm<br/>deploy-helm.sh]
+    Choice -->|kubectl| Kubectl[Deploy with kubectl<br/>deploy-kubectl.sh]
+
+    Helm --> Verify[Verify Deployment<br/>verify-deployment.sh]
+    Kubectl --> Verify
+
+    Verify --> Check{All Checks<br/>Passed?}
+
+    Check -->|Yes| Access[Access Application<br/>http://minikube-ip:30080]
+    Check -->|No| Troubleshoot[Troubleshoot<br/>View logs & events]
+
+    Troubleshoot --> Fix[Fix Issues]
+    Fix --> Verify
+
+    Access --> Use[Use Application]
+    Use --> Done{Finished?}
+
+    Done -->|Yes| Cleanup[Cleanup Resources<br/>cleanup.sh]
+    Done -->|No| Use
+
+    Cleanup --> End([End])
+
+    style Minikube fill:#4CAF50
+    style Build fill:#2196F3
+    style Helm fill:#FF9800
+    style Kubectl fill:#FF9800
+    style Verify fill:#9C27B0
+    style Access fill:#4CAF50
+    style Cleanup fill:#f44336
+```
+
 ### Directory Structure
 
 ```
@@ -261,34 +339,96 @@ phase-4-local-deployment/
 │       ├── Chart.yaml        # Chart metadata
 │       ├── values.yaml       # Default values
 │       └── templates/        # K8s resource templates
-├── scripts/                  # Deployment scripts
-│   ├── setup-minikube.sh    # Minikube setup
-│   ├── build-images.sh      # Image building
-│   ├── deploy-k8s.sh        # kubectl deployment
-│   ├── deploy-helm.sh       # Helm deployment
-│   ├── verify-deployment.sh # Health verification
-│   └── cleanup.sh           # Resource cleanup
+├── scripts/                  # Deployment automation scripts
+│   ├── setup-minikube.sh    # Minikube cluster setup (326 lines)
+│   ├── build-images.sh      # Docker image building (334 lines)
+│   ├── deploy-kubectl.sh    # kubectl deployment (357 lines)
+│   ├── deploy-helm.sh       # Helm deployment (373 lines)
+│   ├── verify-deployment.sh # Health verification (524 lines)
+│   ├── cleanup.sh           # Resource cleanup (403 lines)
+│   └── README.md            # Scripts documentation
 ├── docs/                     # Additional documentation
 └── README.md                 # This file
 ```
+
+### Deployment Automation Scripts
+
+Our comprehensive deployment automation includes 6 production-ready scripts (2,317 lines total):
+
+#### 1. setup-minikube.sh
+- Minikube installation and prerequisites checking
+- Configurable resource allocation (CPU, memory, disk)
+- Addon enablement (ingress, metrics-server, storage)
+- kubectl context configuration
+- Cluster verification
+
+#### 2. build-images.sh
+- Multi-stage Docker builds for backend and frontend
+- Automatic Minikube Docker environment configuration
+- Image tagging (version + latest)
+- Image loading into Minikube
+- Build verification and size reporting
+
+#### 3. deploy-kubectl.sh
+- Interactive secret management (no command-line exposure)
+- Kustomize-based deployment
+- Pod readiness waiting with timeout
+- Automatic log display on failure
+- Deployment verification
+
+#### 4. deploy-helm.sh
+- Helm chart linting before deployment
+- Auto-detection of install vs upgrade
+- Interactive secret prompts with auto-generation
+- Multiple values files support (local, dev, prod)
+- Dry-run mode for testing
+- Comprehensive command guidance
+
+#### 5. verify-deployment.sh
+- Namespace and resource existence checks
+- Pod health and readiness verification
+- Service endpoint validation
+- PVC binding status check
+- Health endpoint testing (backend & frontend)
+- Smoke tests (API docs, tasks endpoint)
+- Color-coded status reporting
+- Troubleshooting guidance on failure
+
+#### 6. cleanup.sh
+- Deployment method auto-detection (Helm/kubectl)
+- Interactive confirmation prompts
+- Helm release uninstallation
+- Namespace deletion
+- Optional Docker image removal
+- Optional Minikube stop/delete
+- Cleanup summary reporting
+
+All scripts feature:
+- 🎨 Color-coded logging (INFO, SUCCESS, WARNING, ERROR)
+- ⚙️ Environment variable configuration
+- 🛡️ Comprehensive error handling
+- 🔄 Interactive prompts for user input
+- ✅ Detailed verification and reporting
 
 ### Components
 
 #### Backend
 - **Image**: `todo-chatbot-backend:latest`
-- **Base**: Python 3.13-slim
+- **Base**: Python 3.12-slim (SQLAlchemy compatible)
 - **App**: FastAPI with OpenAI integration
 - **Port**: 8001
 - **Replicas**: 2 (configurable)
 - **Health Checks**: Liveness and readiness probes
+- **Resources**: 256Mi-512Mi memory, 250m-500m CPU
 
 #### Frontend
 - **Image**: `todo-chatbot-frontend:latest`
 - **Base**: Node 20 (build), Nginx Alpine (runtime)
-- **App**: React/Vite SPA
-- **Port**: 80
+- **App**: React/Vite SPA with ChatKit UI
+- **Port**: 80 (NodePort 30080)
 - **Replicas**: 2 (configurable)
-- **Server**: Nginx with optimized config
+- **Server**: Nginx with SPA routing support
+- **Resources**: 128Mi-256Mi memory, 100m-200m CPU
 
 #### Persistence
 - **Backend Data**: PersistentVolumeClaim (1Gi)

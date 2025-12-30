@@ -1,3 +1,10 @@
+# Kubernetes ConfigMap for Todo Chatbot Application
+# Task 2.3: Create Kubernetes ConfigMap
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This ConfigMap stores non-sensitive configuration for the application.
+# Sensitive data (API keys, secrets) should go in secrets.yaml instead.
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,7 +12,33 @@ metadata:
   namespace: todo-chatbot
   labels:
     app: todo-chatbot
+    managed-by: kustomize
+  annotations:
+    description: "Non-sensitive configuration for Todo Chatbot"
 data:
-  DATABASE_URL: "sqlite:///./database_v2.db"
+  # Database Configuration
+  # SQLite database file path - stored in PersistentVolume
+  # Note: Four slashes (////) required for absolute path in SQLite URI
+  DATABASE_URL: "sqlite:////app/data/todo.db"
+
+  # Better Auth Configuration
+  # Base URL for authentication callbacks
+  BETTER_AUTH_URL: "http://localhost:8001"
+
+  # Logging Configuration
+  # Valid levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  LOG_LEVEL: "INFO"
+
+  # CORS Configuration
+  # Comma-separated list of allowed origins
+  # Includes: frontend service URL, localhost for development
+  CORS_ORIGINS: "http://localhost:3000,http://todo-chatbot-frontend.todo-chatbot.svc.cluster.local,http://localhost:30080"
+
+  # Application Configuration
+  # These can be overridden via environment variables in deployments
   BACKEND_PORT: "8001"
   FRONTEND_PORT: "80"
+
+  # Frontend Configuration
+  # Backend API URL for frontend to connect to backend service
+  VITE_API_URL: "http://todo-chatbot-backend:8001"

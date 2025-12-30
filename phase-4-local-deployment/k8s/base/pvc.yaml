@@ -1,15 +1,38 @@
+# Kubernetes PersistentVolumeClaim for Todo Chatbot Database
+# Task 2.4: Create Persistent Volume Claim for Database
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This PVC provides persistent storage for the SQLite database.
+# Data persists across pod restarts and deletions.
+#
+# Storage Details:
+# - Size: 1Gi (sufficient for development/testing)
+# - Access Mode: ReadWriteOnce (single pod can mount for read/write)
+# - Storage Class: standard (Minikube default, uses hostPath)
+# - Mount Path: /app/data (in backend pod)
+# - Database File: /app/data/todo.db
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: backend-pvc
+  name: todo-chatbot-data
   namespace: todo-chatbot
   labels:
     app: todo-chatbot
-    component: backend
+    managed-by: kustomize
+  annotations:
+    description: "Persistent storage for SQLite database"
+    volume.beta.kubernetes.io/storage-class: "standard"
 spec:
+  # Access mode: Single pod can mount volume for read/write
   accessModes:
     - ReadWriteOnce
+
+  # Storage requirements
   resources:
     requests:
       storage: 1Gi
+
+  # Storage class (Minikube default)
+  # Uses hostPath provider for local development
   storageClassName: standard

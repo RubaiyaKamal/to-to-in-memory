@@ -1,10 +1,24 @@
+{{- /*
+Kubernetes Namespace for Todo Chatbot
+Task 3.2: Helm Templates
+Reference: specs/003-local-k8s-deployment/tasks.md
+
+This template creates a dedicated namespace for the application.
+Conditionally created based on .Values.namespace.create
+*/ -}}
 {{- if .Values.namespace.create }}
 apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ .Values.namespace.name }}
   labels:
+    app: todo-chatbot
+    environment: {{ .Values.global.environment }}
+    managed-by: helm
+    phase: phase-4
     {{- range $key, $value := .Values.labels }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
+  annotations:
+    description: "Phase IV - Local Kubernetes Deployment for Todo Chatbot"
 {{- end }}

@@ -1,0 +1,242 @@
+# Helm Values for Production Environment
+# Task 3.3: Helm Values Examples
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# IMPORTANT: Production secrets MUST be managed via secure secret management
+# (HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, etc.)
+#
+# Usage:
+#   helm install todo-chatbot ./phase-4-local-deployment/helm/todo-chatbot \
+#     -f phase-4-local-deployment/helm/todo-chatbot/values-prod.yaml \
+#     --set secrets.OPENAI_API_KEY="sk-proj-..." \
+#     --set secrets.BETTER_AUTH_SECRET="..."
+
+# Global settings
+global:
+  environment: production
+
+# Namespace configuration
+namespace:
+  create: true
+  name: todo-chatbot-prod
+
+# ConfigMap - Non-sensitive configuration
+config:
+  # Production database URL (consider using PostgreSQL for production)
+  DATABASE_URL: "sqlite:////app/data/todo.db"
+  LOG_LEVEL: "WARNING"  # Only warnings and errors in production
+  CORS_ORIGINS: "https://todo-chatbot.example.com,https://www.todo-chatbot.example.com"
+  BETTER_AUTH_URL: "https://api.todo-chatbot.example.com"
+  BACKEND_PORT: "8001"
+  FRONTEND_PORT: "80"
+  VITE_API_URL: "https://api.todo-chatbot.example.com"
+
+# Secrets - MUST be provided via secure secret management
+# DO NOT commit actual production secrets to version control
+secrets:
+  OPENAI_API_KEY: "REPLACE_WITH_VAULT_REFERENCE"
+  BETTER_AUTH_SECRET: "REPLACE_WITH_VAULT_REFERENCE"
+
+# Backend configuration
+backend:
+  enabled: true
+  replicaCount: 3  # High availability with 3 replicas
+
+  image:
+    repository: registry.example.com/todo-chatbot-backend
+    tag: "1.0.0"  # Use semantic versioning tags, not 'latest'
+    pullPolicy: IfNotPresent  # Stable images, don't pull unless needed
+
+  service:
+    type: ClusterIP
+    port: 8001
+    targetPort: 8001
+
+  # Production resource limits - ensure sufficient capacity
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  # Persistent storage for SQLite database
+  # NOTE: Consider using PostgreSQL or managed database for production
+  persistence:
+    enabled: true
+    storageClass: "ssd"  # Fast SSD storage for production
+    accessMode: ReadWriteOnce
+    size: 10Gi  # Larger storage for production data
+    mountPath: /app/data
+
+  # Production health check settings
+  livenessProbe:
+    enabled: true
+    path: /api/health
+    initialDelaySeconds: 60  # Allow time for initialization
+    periodSeconds: 30  # Check less frequently
+    timeoutSeconds: 10
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    path: /api/health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 3  # High availability with 3 replicas
+
+  image:
+    repository: registry.example.com/todo-chatbot-frontend
+    tag: "1.0.0"  # Use semantic versioning tags, not 'latest'
+    pullPolicy: IfNotPresent  # Stable images, don't pull unless needed
+
+  service:
+    type: ClusterIP  # Use Ingress/LoadBalancer for external access
+    port: 80
+    targetPort: 80
+
+  # Production resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "400m"
+
+  # Production health check settings
+  livenessProbe:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    path: /health
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Autoscaling - enabled for production
+autoscaling:
+  backend:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 75  # Scale at 75% CPU
+    targetMemoryUtilizationPercentage: 80  # Scale at 80% memory
+  frontend:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 80
+
+# Ingress - production configuration with TLS
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    # Production TLS certificates
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+    # Security headers
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+
+    # CORS configuration
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://todo-chatbot.example.com"
+
+    # Request size limits
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+    # Timeouts
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+
+  # Production domains
+  hosts:
+    - host: todo-chatbot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: www.todo-chatbot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: api.todo-chatbot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+  # Production TLS certificates
+  tls:
+    - secretName: todo-chatbot-prod-tls
+      hosts:
+        - todo-chatbot.example.com
+        - www.todo-chatbot.example.com
+        - api.todo-chatbot.example.com
+
+# Pod Disruption Budget (production resilience)
+podDisruptionBudget:
+  backend:
+    enabled: true
+    minAvailable: 2  # Always keep at least 2 backend pods running
+  frontend:
+    enabled: true
+    minAvailable: 2  # Always keep at least 2 frontend pods running
+
+# Network Policies (production security)
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+  egress:
+    - to:
+      - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443  # HTTPS
+        - protocol: TCP
+          port: 80   # HTTP
+
+# Additional labels for production tracking
+labels:
+  app: todo-chatbot
+  managed-by: helm
+  environment: production
+  tier: production
+  version: "1.0.0"
+  team: platform
+  cost-center: engineering
+
+# Service Monitor (for Prometheus monitoring)
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    prometheus: kube-prometheus

@@ -1,19 +1,37 @@
+# Kubernetes Service for Todo Chatbot Backend
+# Task 2.6: Create Backend Service
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This ClusterIP service provides internal cluster access to the FastAPI backend.
+# - Service DNS: todo-chatbot-backend.todo-chatbot.svc.cluster.local
+# - Internal Port: 8001
+# - Used by: Frontend application for API requests
+
 apiVersion: v1
 kind: Service
 metadata:
   name: todo-chatbot-backend
   namespace: todo-chatbot
   labels:
-    app: todo-chatbot
+    app: todo-chatbot-backend
     component: backend
+    managed-by: kustomize
+  annotations:
+    description: "Internal ClusterIP service for FastAPI backend"
 spec:
+  # ClusterIP: Internal service only, not exposed outside cluster
   type: ClusterIP
+
+  # Selector must match backend deployment pod labels
   selector:
-    app: todo-chatbot
-    component: backend
+    app: todo-chatbot-backend
+
+  # Port configuration
   ports:
   - name: http
-    port: 8001
-    targetPort: 8001
+    port: 8001          # Service port (internal cluster access)
+    targetPort: 8001    # Container port in backend pods
     protocol: TCP
+
+  # Session affinity: None for stateless API
   sessionAffinity: None

@@ -1,18 +1,35 @@
+# Kustomize Configuration for Todo Chatbot Base Resources
+# Task 2.1: Create Kubernetes Namespace and Base Configuration
+# Reference: specs/003-local-k8s-deployment/tasks.md
+#
+# This file defines the base Kustomize configuration that applies
+# common settings to all resources in the todo-chatbot namespace.
+
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+# Namespace to apply to all resources
 namespace: todo-chatbot
 
+# Common labels applied to all resources
+labels:
+  - pairs:
+      app: todo-chatbot
+      managed-by: kustomize
+
+# Common annotations applied to all resources
+commonAnnotations:
+  project: "evolution-of-todo"
+  phase: "phase-4"
+
+# Resources to include in this kustomization
+# Note: As we progress through tasks, we'll add more resources here
 resources:
   - namespace.yaml
-  - configmap.yaml
-  - secret.yaml
-  - pvc.yaml
-  - backend-deployment.yaml
-  - backend-service.yaml
-  - frontend-deployment.yaml
-  - frontend-service.yaml
-
-commonLabels:
-  app: todo-chatbot
-  managed-by: kustomize
+  - secrets.yaml             # Task 2.2 ✓
+  - configmap.yaml           # Task 2.3 ✓
+  - pvc.yaml                 # Task 2.4 ✓
+  - backend-deployment.yaml  # Task 2.5 ✓
+  - backend-service.yaml     # Task 2.6 ✓
+  - frontend-deployment.yaml # Task 2.7 ✓
+  - frontend-service.yaml    # Task 2.8 ✓
